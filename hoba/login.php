@@ -68,10 +68,9 @@ if (isset ($opts ['forgotboth']) && $opts ['forgotboth'] == 1) {
     $swdb->setUserTempPass ($u->uid, $temppass, time ()+1800);
     $loginurl = sprintf ("%sindex.php?tempuser=%s&temppass=%s", $baseurl, 
 			 urlencode ($u->uname), urlencode ($temppass));
-    $helpnote = "Your user name is $u->uname and your PIN to enable this device is $temppass\n";    
-    $helpnote .= "<br><a href=\"$loginurl\">Or click here to login to $appName</a>";
+    $helpnote = "A new device is requesting access to your $appname for $u->uname. To allow this device access use this code: <b>$temppass</b>\nIf you don't approve, do nothing.";    
     mailto ($u->email, "$appName login information", $helpnote);
-    sendResp (200, "Check your email to login...", NULL);
+    sendResp (200, "Check your email your OTP to login", NULL);
 }
 
 if (($u = $swdb->fetchUser ($opts ['uname'])) == NULL) {
@@ -83,9 +82,10 @@ if (! isset ($opts ['pubkey'])) {
 }
 $pubkeys = $swdb->fetchUserPubkeys ($u->uid);
 if (isset ($opts ['temppass'])) {
-    if (trim ($opts ['temppass']) != $u->temppass || $u->temppasstmo < time ()) {
-	sendResp (500, "PIN bad or expired", NULL);
-    }
+    if (trim ($opts ['temppass']) != $u->temppass)
+	sendResp (500, "invalid OTP", NULL);
+    if ($u->temppasstmo < time ())
+    	sendResp (500, "OTP expired", NULL);
 } else if (! count ($pubkeys)) {
 	sendResp (500, "can't log in with a public key with this user", NULL);
 } else {
@@ -128,8 +128,7 @@ if (! openssl_verify ($body, base64_decode ($opts ['signature']), $pkeyid)) {
 if (isset ($opts ['temppass'])) {
     // clear the temp password and enroll the key
     $swdb->setUserTempPass ($u->uid, NULL, NULL);    
-    $swdb->appendUserPubkey ($u->uid, $opts ['pubkey'], 
-			     $_SERVER ['REMOTE_ADDR'], $opts ['platform']);
+    $swdb->appendUserPubkey ($u->uid, $opts ['pubkey']);
 }	
 $swdb->appendUserPubkeyReplayCache ($opts ['signature'], $opts ['curtime'], time ()+3600);
 $swdb->purgeUserPubkeyReplayCache (time ());

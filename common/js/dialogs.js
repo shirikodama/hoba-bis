@@ -8,11 +8,6 @@
  *      License: http://www.gnu.org/licenses/gpl-2.0.html
  */
 
-/* Edit History: 
- */
-
-
-
 function phzDialog (fn, msg, buttons) {
     if (! phzDialog.pane) {
 	phzDialog.pane = new htmlpane ('phzdialog', 'dialogcontainer', 0, 0);
@@ -43,19 +38,12 @@ function phzDialog (fn, msg, buttons) {
     phzDialog.pane.display (1);
 }
 
-function phzAlertInit () {
-    phzDialog.pane = new htmlpane ('phzdialog', 'dialogcontainer', 0, 0);
-    phzDialog.pane.size (200, 160);	
-    phzDialog.pane.pos ((f_clientWidth()-200)/2, (f_clientHeight()-200)/2);
-    phzDialog.pane.z (1000);
-    phzDialog.pane.display (0);
-    phzDialog.pane.setOnStackUnstack (null, false);
-}
-
 function phzAlert (fn, msg, title, size, buttontxt) {
+    if (! size)
+	size = { w:200, h:160 };
     if (! phzDialog.pane) {
 	phzDialog.pane = new htmlpane ('phzdialog', 'dialogcontainer', 0, 0);
-	phzDialog.pane.size (200, 160);	
+	phzDialog.pane.size (size.w, size.h);	
 	phzDialog.pane.z (1000);
     }
     phzDialog.fn = fn;
@@ -65,13 +53,10 @@ function phzAlert (fn, msg, title, size, buttontxt) {
 	    title = "Alert";
 	newc += '<div class=htmlpaneTitle>'+title+'</div>';
     } 
-    if (! size) {
-	size = { w:200, h:160 };
-    }
     if (! buttontxt)
 	buttontxt = "Ok";
     var x = f_scrollLeft () + (f_clientWidth()-size.w)/2;
-    var y = f_scrollTop + (f_clientHeight()-200)/2;
+    var y = f_scrollTop () + (f_clientHeight()-size.h)/2;
     if (x < 0)
 	x = 0;
     if (y < 0)
@@ -99,7 +84,6 @@ function phzInfo (title, msg) {
     if (! phzInfo.pane) {
 	phzInfo.pane = new htmlpane ('phzinfo', 'infocontainer', 0, 0);
 	phzInfo.pane.size (size.w, size.h);
-	phzInfo.pane.pos (200, 160);		
 	phzInfo.pane.setStackable (true);
     }
     var x = f_scrollLeft () + (f_clientWidth()-size.w)/2;

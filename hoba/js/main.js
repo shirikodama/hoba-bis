@@ -7,21 +7,19 @@
  *      License: http://www.gnu.org/licenses/gpl-2.0.html	   
  */
 
+// Note: this module is just UI stuff and has nothing to do with HOBA per se.
+
 function mainPage (prefix, opts) {
     this.prefix = prefix;
     this.opts = opts;
-    if (st.site) {
-	st.rightOff = 32;
-	st.topOff = 8;    
-    } else {
-	st.rightOff = 0;
-	st.topOff = 0;
-    }
+    this.rightOff = 32;
+    this.topOff = 104;
+    this.paneWidth = 300;
     this.settingpane = new htmlpane (this.prefix+'main', opts.main, 0, 0);
     this.settingpane.oclass ('paneBox');
     this.settingpane.display (0);
     this.settingpane.setStackable (true);
-    this.settingpane.size (300, 400);
+    this.settingpane.size (this.paneWidth, 400);
     this.settingpane.scroll (1);
     this.loggedin = opts.user ? true : false;
     this.lb = new loginbox (this.prefix+'.lb', 'hoba', {baseurl: baseurl}, {pane: opts.loginbox}, this.loggedin);  
@@ -41,9 +39,9 @@ function mainPage (prefix, opts) {
 
 mainPage.prototype.display = function () {
     var newc = '';
-    var cw = f_clientWidth ()-32-300 ;
-    this.lb.pane.pos (cw, 32);    
-    newc += '<div style="position:absolute; top:'+st.topOff+'px; right:'+st.rightOff+'px; border:2px solid gray; background:white">';
+    var cw = f_clientWidth ()-this.rightOff-this.paneWidth ;
+    this.lb.pane.pos (cw, this.topOff);    
+    newc += '<div style="position:absolute; top:'+this.topOff+'px; right:'+this.rightOff+'px; border:2px solid gray; background:white">';
     var menu = new topMenu ();
     if (this.loggedin) {
 	menu.item ("Settings", this.prefix+'.settings()', '', '', false);	
@@ -63,8 +61,17 @@ mainPage.prototype.settings = function () {
     var html = '';
     html += this.settingpane.title ("Settings", this.prefix+".settingpane.display(0);");
     html += '<h3>Update '+this.opts.user+'</h3>';
-    this.settingpane.reliableNewc (html);    
+    this.settingpane.reliableNewc (html);
+    var cw = f_clientWidth ()/2-this.paneWidth/2;
+    this.settingpane.pos (cw, this.topOff);        
     this.settingpane.display (true);
+};
+
+mainPage.prototype.clearCredentials = function () {
+    phzDialog (function (confirm) {
+	if (confirm)
+	    localStorage.clear ();
+    }, "Clear all local credentials?<br>No undo.");
 };
 
 mainPage.prototype.logout = function (all) {

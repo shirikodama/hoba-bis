@@ -18,11 +18,6 @@ TABLE {
     width: 50%;
 }
 
-#page_userprofile, #page_stats, #page_map, #page_friendfinder, #page_awards, #page_snowquest, #page_account, #page_friends { 
-    background:url(../imgs/davidmatblack.png);
-}
-
-
 H1, H2, H3 { 
 /*  color:#235863;*/
 /*  color:#125ba8;*/
@@ -31,14 +26,14 @@ H1, H2, H3 {
 }
 
 div.textbox {
-    margin-left: 200px;
+    margin-left: 150px;
     margin-top: 60px;
     padding-bottom: 30px;
     padding-left: 20px;
     padding-right: 10px;
-    width: 900px;
+    width: 60%;
     background:white;
-    border:2px solid gray;" 
+    border:2px solid gray;
 }    
 
 div.demoTitle { 
@@ -128,6 +123,10 @@ a.htmlpaneTitle {
   color:#eaab00;
 }
 
+div.paneContents { 
+    padding: 5px;
+}
+
 div.dashBox { 
   border:1px solid #74b0c6; 
   border:1px solid white; 
@@ -137,7 +136,7 @@ div.dashBox {
 
 div.paneBox, table.paneBox { 
   background:#e9f7fa url(../imgs/davidmat7.png);
-  border:1px solid #4d7583; 
+  border:1px solid #4d7583;
   margin-bottom: 4px;
   border-bottom-right-radius:12px;
   border-bottom-left-radius:12px;
