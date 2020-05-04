@@ -1,0 +1,335 @@
+BODY {
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-size: 10pt;
+  background:#e9f7fa url(../imgs/davidmat10.png);
+  margin:0px;
+}
+
+TABLE { 
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-size: 10pt; 
+  background:transparent;  
+}
+
+.center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+}
+
+#page_userprofile, #page_stats, #page_map, #page_friendfinder, #page_awards, #page_snowquest, #page_account, #page_friends { 
+    background:url(../imgs/davidmatblack.png);
+}
+
+
+H1, H2, H3 { 
+/*  color:#235863;*/
+/*  color:#125ba8;*/
+  color:#0323d2;
+  text-align: center 
+}
+
+div.textbox {
+    margin-left: 200px;
+    margin-top: 60px;
+    padding-bottom: 30px;
+    padding-left: 20px;
+    padding-right: 10px;
+    width: 900px;
+    background:white;
+    border:2px solid gray;" 
+}    
+
+div.demoTitle { 
+  color: #ffffff;                
+  /*font-family: Garamond, Georgia, serif;*/
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  text-align: center ;
+  font-weight: bold;
+  font-size: 24pt;
+  margin-top: 20px;
+}
+
+div.homeDemoTitle,td.homeDemoTitle { 
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  text-align: center ;
+  font-weight:bold;
+  font-size: 24pt;
+  margin-top: 5px;
+  color:#fff8e7;
+  background:#333333;
+}
+
+a:link, a:visited, a:active 
+
+{ 
+  color: #000000;
+  text-decoration: none;
+}
+
+
+span.newX, div.newX, a.newX { 
+
+color: #d9005a;    /* red7421 v=85 mine */
+  font-weight: bold;
+}
+
+span.newA, div.newA a, a.newA {
+   color:#0323d2;
+}
+
+a.smallA { 
+  color:#0221d2; 
+  font-size:9px
+}
+
+.small { 
+  color:black; 
+  font-size:9px
+}
+
+a.mediumA,span.mediumA { 
+  color:#0221d2; 
+  font-size:12px;
+  font-weight:bold
+}
+
+a.largeA,span.largeA { 
+  color:#0221d2; 
+  font-size:16px;
+  font-weight:bold
+}
+
+span.newAlert, div.newAlert, a.newAlert { 
+
+  background: #d9005a;    /* red7421 v=85 mine */
+  font-weight: bold;
+  color:#FFF8E7; 
+  text-align:center;
+  width:20px;
+}
+
+div.htmlpaneTitle { 
+ position:relative; 
+  background:#161db8; 
+  background:transparent url("../imgs/OFF5.png") repeat-x top left;
+  top:0px; 
+  left:0px; 
+  width:100%; 
+  height:35px;
+  line-height:35px;
+  text-align:center;
+  font-weight: bold; 
+  color:#ffffff;
+}
+
+a.htmlpaneTitle { 
+  color:#eaab00;
+}
+
+div.dashBox { 
+  border:1px solid #74b0c6; 
+  border:1px solid white; 
+  background-color:#dcf5fa;  /* purple 7454 sat=30 l=90 david */
+  background-color:#eeeeee;
+}
+
+div.paneBox, table.paneBox { 
+  background:#e9f7fa url(../imgs/davidmat7.png);
+  border:1px solid #4d7583; 
+  margin-bottom: 4px;
+  border-bottom-right-radius:12px;
+  border-bottom-left-radius:12px;
+}
+
+div.roundedBox, table.roundedBox { 
+  background:#e9f7fa url(../imgs/davidmat10.png);
+  border:1px solid #74b0c6; 
+  margin-bottom: 4px;
+  border-radius:12px;
+}
+
+div.loadingBox, table.loadingBox { 
+  background:#eeeeee;
+  border:1px solid #cccccc; 
+  margin-bottom: 4px;
+  border-radius:12px;
+}
+
+tr.navBar { 
+  font-weight:bold;
+  font-size:14px;
+  background:white;
+  height:40px;
+}
+
+.navBorder { 
+  height:2px;
+  background-color:black;  
+}
+
+
+div.article,table.article, td.article,tr.article { 
+  color:#000;
+  background-color:#e9f7fa;  /* purple 7454 sat=10 l=90 david */
+  padding: 4px 2px 4px 2px;
+  text-align: left;
+  width: 95%;
+  margin-left: 4px;
+  border-radius: 5px;
+}
+
+div.articleResp { 
+  background-color:#a0eafa;
+  color: #000;
+  padding: 4px 2px 4px 2px;
+  text-align: left;
+  width: 80%;
+}
+
+/* top menu buttons */
+
+.topbuttonfirstlast, .toproundbuttonfirstlast, .topbutton, .topbuttonfirst, .toproundbuttonfirst,
+.topbuttonlast, .toproundbuttonlast, .roundedButton { 
+  background:transparent url("../imgs/OFF5.png") repeat-x top left;
+  text-decoration: none;
+  text-align:center;
+  height:46px; width:80px; font-weight:bold;  
+  color:#fff8e7;
+  display:table-cell;
+}
+
+
+.topbutton { 
+  border-right:1px solid #aaaaaa;
+  border-left:1px solid #ffffff;
+}
+
+.topbuttonfirst,.toproundbuttonfirst { 
+  border-right:1px solid #aaaaaa;
+}
+
+
+.topbuttonlast, .toproundbuttonlast { 
+  border-left:1px solid #ffffff;
+}
+
+.toproundbuttonfirst, .toproundbuttonfirstlast { 
+  border-top-left-radius:5px;
+  border-bottom-left-radius:5px;
+}
+
+.toproundbuttonlast,.toproundbuttonfirstlast { 
+  border-top-right-radius:5px;
+  border-bottom-right-radius:5px;
+}
+
+
+.topbutton a, .topbuttonfirst a, .topbuttonlast a, .topbuttonfirstlast a, .toproundbuttonfirstlast a,
+.toproundbuttonfirst a, .toproundbuttonlast a { 
+  background:transparent;
+  border: 0px;
+  font-size: 11px;
+  color:#FFF8E7;
+}
+
+td.topbuttonselected { 
+  background:url(../imgs/OFF5select.png);
+}
+
+
+td.topbutton:hover, td.topbuttonfirst:hover,td.topbuttonlast:hover,
+td.toproundbuttonfirst:hover, td.toproundbuttonlast:hover {
+  color:#000000;
+  cursor:pointer;
+}
+
+td.topbutton:visited, td.topbuttonfirst:visited,td.topbuttonlast:visited,
+td.toproundbuttonfirst:visited, td.toproundbuttonlast:visited {
+  color:#fff8e7;
+}
+
+.roundedButton { 
+  border-radius: 10px;
+  width:32px;
+  height:32px;
+  font-weight:bold;
+  font-size:24px;
+}
+
+.phzbutton {
+      background:url(../imgs/OFF5.png); 
+      text-decoration: none; text-align:center; 
+      height:40px; width:80px; 
+      font-weight:bold; font-size:16px; 
+      color:#fff8e7; 
+      border-radius:6px;
+}
+
+
+.calbutton { 
+  text-decoration: none;
+  height:40px; width:80px; font-weight:bold;  
+  font-size: 18px;
+  color:#fff8e7;
+  background:#f3f0f2;
+  background:transparent url("../imgs/OFF5.png") repeat-x top left;
+  border-right:1px solid #aaaaaa;
+  border-left:1px solid #ffffff;
+  border-bottom: 6px solid #514e87;
+  border-bottom: 1px solid #0223d3;
+}
+
+.calsynopsis { 
+  text-decoration: none;
+  height:40px;  
+  color:#000000;
+  background:#ffffff;
+  border-right:1px solid #aaaaaa;
+  border-left:1px solid #ffffff;
+  border-bottom: 6px solid #514e87;
+  border-bottom: 1px solid #0223d3;
+}
+
+a.phzButton {
+    background: transparent url('../imgs/phz_button_a7.png') no-repeat  scroll bottom right;
+    color:#FFF8E7;
+    display: block;
+    float: left;  
+    font: normal 14px arial, sans-serif;
+    font-weight: bold;
+    text-align:center;
+    height: 32px;
+    margin-right: 6px;
+    margin-bottom: 5px;
+    padding-right: 8px; /* sliding doors padding */
+    text-decoration: none;
+}
+
+a.phzButton span {
+    background: transparent url('../imgs/phz_button_span7.png') no-repeat bottom left;
+    color: white;
+    display: block;
+    line-height: 14px;
+    padding: 9px 0 9px 6px;
+} 
+
+
+
+a.phzButton:active {
+    background-position: top right;
+    color: #808080;
+    outline: none; /* hide dotted outline in Firefox */
+}
+
+a.phzButton:active span {
+    background-position: top left;
+    padding: 10px 0 8px 8px; /* push text down 1px */
+} 
+
+a.phzButton:hover span {
+  color:black;
+}
+
+/* End */

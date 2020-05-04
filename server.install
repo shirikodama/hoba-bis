@@ -1,0 +1,56 @@
+0) load all of the packages onto an initial VM which can then be
+   cloned for the rest of your VM's.
+   o create a new vm with the ubuntu-12.04-server.iso image
+   o set the network interface to "bridged"
+   o set the disk size to about 5-6 gig
+   o set memory to about 512M
+   o now start the create process
+0.5) apt-get update
+    apt-get install apt-file
+1) sqlite3
+2) get php7, php7-curl, php7-mysql, php7-gmp, php-pear, php7-sqlite
+   then:  service apache2 restart
+9) git clone...
+10) on database carrying machines:)
+   on the first clone vm, as root:
+   on each of the base testbed machines (on mtcc.com):
+   for each database (fakesys, fakesco, fakinks):
+       cd ~/faux/configs/[host]/       
+       go to the base machine and do a mysqldump - d > dbdefs.sql
+       svn commit faux
+   for each database on the new testbed:
+       cd ~/faux/configs/[host]/
+       svn update
+       mysql [db] < dbdefs.sql
+       mysql [db] < dbgrant.sql
+11) /var/www
+     ln -s ~/faux/common /var/www/common
+     ln -s ~/faux/[current name] /var/www/site
+     ln -s ~/faux/common/php/index.php index.php      
+     rm /var/www/index.html
+     ln -s ~faux/[current name]/config.php /etc/routersliceconfig.php
+
+    need to do this for fakesys, fakesco, fakinks
+
+    for teleworker to have a fakedroid emulator:
+
+    ln -s ~/faux/fakedroid /var/www/site
+
+28) sendmail
+    on fakesys and fakesco, configure mail:
+
+    o apt-get install sendmail
+    o pear install Net_SMTP Mail
+    o edit /etc/mail/sendmail.mc add:
+       define(`confDOMAIN_NAME', `fakesys.local')dnl		// on fakesys
+       define(`confDOMAIN_NAME', `fakesco.com')dnl		// on fakesco
+    o make
+    o service sendmail restart
+    o edit the config.php files in ~/faux/fake[sys|sco] to set mailhost and smtphost to be localhost,
+      and set the no-reply to be the same as the confDOMAIN_NAME's above.
+      
+33) to get sqlite working instead of mysql:
+    o in ~/faux/fakesys/config.php change: $dbname = "../dbs/fakesys.db";
+    o in ~/faux/fakesco/config.php change: $dbname = "../dbs/fakesco.db";
+    o cd ~/faux; chown www-data.www-data dbs; chown www-data.www-data dbs/*.db;
+    o cd ~/faux; chmod ug+w dbs; chmod ug+w dbs/*.db;
