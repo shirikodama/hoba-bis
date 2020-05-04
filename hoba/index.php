@@ -64,8 +64,10 @@ Using the Demo:
 <li>Get a copy of the code here at <a href="https://github.com/shirikodama/hoba-bis" target="_blank">HOBA-bis repo</a></li>
 <li>Use the login box on the right to log on and off the site, as well as join</li>
 <li>You can create any number of new accounts and log into any of them at any time; just use logout to switch between them</li>
+<li>If it says that it can't use HOBA, make sure you are using a https: url, and use either chrome or firefox</li>
 <li>If you want to log in from a new device, just login as usual, and it will prompt to you get an PIN code to enroll that device in your email. This can obviously be done using SMS or any other out of band method just like normal enrollment verification</li>
 <li>This site does spectacularly little after logging in. This is a feature, not a bug</li>
+<li>Like most things, most of this is UI crap. Don't let that deter you. I've tried to point out the juicy bits to show what is actually new and different in the code.</li>
 <li></li>
 <li>If you complain that the backend is written in PHP, you will be obligated to write it in your own favorite language</li>
 <li>If you can lift the Hoba you can win valuable prizes</li>
@@ -74,7 +76,9 @@ Using the Demo:
 <p>
 TODO:
 <ul>
-   <li>this code doesn't support email liveliness verification for enrollment, but it would work the same as password based enroll</li>
+   <li>This code doesn't support email liveliness verification for enrollment, but it would work the same as password based enroll</li>
+   <li>There isn't currently a way to revoke a device in the code. This would definitely need to be implemented in a real deployment for lost or stolen devices; another reason why the credential store needs to be protected</li>
+   <li></li>
 </ul>    
 </p>
 

@@ -2,7 +2,7 @@
 /*
  *		 Copyright (c) Mar 22 13:31:38  MTCC
  *	Author: Michael Thomas
- *	Module: adduser.php
+ *	Module: join.php
  *	Created: Fri Mar 22 13:31:38 2013
  *	Abstract:
  *      License: http://www.gnu.org/licenses/gpl-2.0.html	   	   	   	   

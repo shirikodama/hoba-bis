@@ -235,7 +235,7 @@ loginbox.prototype.sendPubkeyJoinForm = function () {
 	return;
     }
     var key = this.genAsymmetricKey ();
-    var url = sprintf ("adduser.php?mode=ajax&uname=%s&email=%s&platform=web&app=%s",
+    var url = sprintf ("join.php?mode=ajax&uname=%s&email=%s&platform=web&app=%s",
 		       encodeURIComponent (uname), encodeURIComponent (email),
 		       encodeURIComponent (this.appname));
     var rsa = new RSAKey ();

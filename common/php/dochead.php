@@ -7,7 +7,7 @@
 <link rel="shortcut icon" href="<?php print $baseurl; ?>imgs/hoba-sm.jpg" />
 </head>
 <body>
-<div style="background:white; width:100%;"><a href="<?php print $siteurl; ?>" ><img src="imgs/hoba-sm.jpg" style="width: 150px; border: 2px solid gray; vertical-align:middle"></a><H1 style="display:inline; margin-left:80px">Host Origin Based Authentication (HOBA) Demo and code!</h1></div>
+<div style="background:white; width:100%;"><a href="<?php print $siteurl; ?>" ><img src="imgs/hoba-sm.jpg" style="width: 150px; border: 2px solid gray; vertical-align:middle"></a><H1 style="display:inline; margin-left:80px">Host Origin Based Authentication (HOBA) Demo and Code!</h1></div>
   
 <?php
 
