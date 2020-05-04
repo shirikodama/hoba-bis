@@ -78,9 +78,9 @@ TODO:
 </ul>    
 </p>
 
-   <div id="mainpage"></div>
-   <div id="maincontainer"></div>
-   <div id="loginpanecontainer"></div>
+<div id="mainpage"></div>
+<div id="maincontainer"></div>
+<div id="loginpanecontainer"></div>
 </p>
 </div>
 </div>
