@@ -27,8 +27,22 @@ function loginbox (prefix, appname, baseurls, containers) {
     this.pane.display (0);
     this.msg = '';
     this.pubkeyLoginEnabled = window.Crypto && navigator.credentials;
+    if (this.pubkeyLoginEnabled) {
+	this.useCrypto = false;
+	this.subtle = window.crypto.subtle;
+    }
     this.credprefix = appname;
     this.onLoggedIn = null;
+    this.OK = 200;
+    this.DBDOWN = 400;
+    this.SERVERERROR = 500;
+    this.BADREQUEST = 501;
+    this.SIGERROR = 502;
+    this.UNENROLLED = 503;
+    this.NOUSER = 505;
+    this.BADUSER = 506;
+    this.BADEMAIL = 507;
+    this.USERTAKEN = 508;    
 }
 
 loginbox.prototype.login = function () {
@@ -43,6 +57,41 @@ loginbox.prototype.join = function () {
 	this.pubkeyJoin ();
     else
 	phzAlert (null, "Public Key Join not supported on this device");
+};
+
+loginbox.prototype.pubkeyJoin = function () {
+    var html = '';
+    html += this.pane.title ("Join", this.prefix+".pane.display(0);");
+    html += '<div id='+this.prefix+'.lbmsg class=newX>'+this.msg+'</div>';
+    html += '<div class="paneContents">';
+    html += '<table>';
+    html += '<tr><td><b>Username</b><td><input id='+this.prefix+'.uname size=16></td></tr>';
+    html += '<tr><td><b>Email Address</b><td><input id='+this.prefix+'.email size=16>'+'</td></tr>';
+    html += '<tr><td colspan=2><br>'+phzbutton ('smjoin', 'Join', this.prefix+".pubkeyJoinForm ()", "float:right")+'</td></tr>';
+    html += '<tr><td><a class=mediumA href=# onclick="'+this.prefix+'.login ()">Login</a></td></tr>';
+    html += '</table>';
+    html += '</div>';
+    this.pane.reliableNewc (html);
+    this.pane.size (this.paneWidth, this.paneHeight);
+    this.pane.display (1);
+    this.msg = '';
+};
+
+loginbox.prototype.pubkeyJoinForm = function () {
+    var el = document.getElementById (this.prefix+'.uname');
+    var uname = el.value;
+    if (! uname) {
+	this.log ("You must supply a username");
+	return;
+    }
+    // XXX: check to see if it's in the credential store first for double join.
+    el = document.getElementById (this.prefix+'.email');
+    var email = el.value;
+    if (email.indexOf ('@') < 0) {
+	this.log ("You must supply a valid email");
+	return;
+    }
+    this.sendPubkeyJoin (uname, email);
 };
 
 // UI to get username to login
@@ -63,7 +112,7 @@ loginbox.prototype.pubkeyLogin = function () {
 	user = '';
     //this.log("user to login is " + user);
     html += sprintf ('<div><table><tr ><tr><td><b>Username</b><td><input id='+this.prefix+'.uname value="%s" size=16>', user)+'</td></tr>';
-    html += '<tr><td valign=bottom colspan=2><br>'+phzbutton ('', 'Login', this.prefix+'.sendPubkeyLoginForm ()','float:right')+'</td></tr>';
+    html += '<tr><td valign=bottom colspan=2><br>'+phzbutton ('', 'Login', this.prefix+'.pubkeyLoginForm ()','float:right')+'</td></tr>';
     html += '<tr><td><a class=mediumA href=# onclick="'+this.prefix+'.join ()">Join Now</a></td></tr>';
     html += '</table></div>';
     this.pane.size (this.paneWidth, this.paneHeight);
@@ -73,51 +122,15 @@ loginbox.prototype.pubkeyLogin = function () {
     this.msg = '';
 };
 
-// ==begin HOBA==
-
-
-// send the newly generated public key up to the server to enroll it with the given user
-
-loginbox.prototype.pubkeyJoin = function () {
-    var html = '';
-    html += this.pane.title ("Join", this.prefix+".pane.display(0);");
-    html += '<div id='+this.prefix+'.lbmsg class=newX>'+this.msg+'</div>';
-    html += '<div class="paneContents">';
-    html += '<table>';
-    html += '<tr><td><b>Username</b><td><input id='+this.prefix+'.uname size=16></td></tr>';
-    html += '<tr><td><b>Email Address</b><td><input id='+this.prefix+'.email size=16>'+'</td></tr>';
-    html += '<tr><td colspan=2><br>'+phzbutton ('smjoin', 'Join', this.prefix+".sendPubkeyJoinForm ()", "float:right")+'</td></tr>';
-    html += '<tr><td><a class=mediumA href=# onclick="'+this.prefix+'.login ()">Login</a></td></tr>';
-    html += '</table>';
-    html += '</div>';
-    this.pane.reliableNewc (html);
-    this.pane.size (this.paneWidth, this.paneHeight);
-    this.pane.display (1);
-    this.msg = '';
-};
-
 loginbox.prototype.pubkeyEnroll = function (user, msg) {
     var html = '';
-    var url = this.baseurl+'/login.php';
-    var post = 'enrolldevice=1&uname='+encodeURIComponent (user);
-    var state = this;
-    fetchPhzServer ("POST", url, function (r) {
-			if (r.resp >= 300) {
-			    if (r.resp == 505) {
-				state.msg = "No such user "+user;
-				state.pubkeyLogin ();
-			    } else
-				phzAlert (null, "can't send mail: "+r.comment);
-			    return;
-			} 
-    }, null, post);
     html += this.pane.title ("Enable New Device", this.prefix+".pane.display(0);");
     if (msg)
 	html += '<div id='+this.prefix+'.lbmsg class=newX>'+msg+'</div>';
     html += '<div class="paneContents">';    
     html += sprintf ('<table><tr><td><b>Username</b><td><input id='+this.prefix+'.uname value="%s" size=16 readonly>', user);
     html += '<tr><td><b>OTP (from email)</b><td><input id='+this.prefix+'.temppass size=16>';
-    html += '<tr><td valign=top colspan=2>'+phzbutton ('', 'Send', this.prefix+'.sendPubkeyLoginForm ()','float:right');
+    html += '<tr><td valign=top colspan=2>'+phzbutton ('', 'Send', this.prefix+'.pubkeyLoginForm ()','float:right');
     html += '</table>';
     html += '<h4>Check your email now for the one time password to start using this device</h4>';
     html += '</div>';
@@ -128,17 +141,8 @@ loginbox.prototype.pubkeyEnroll = function (user, msg) {
     this.msg = '';
 };
 
-
-
-loginbox.prototype.genAsymmetricKey = function () {
-    var key = {};
-    var rsa = new RSAKey ();
-    rsa.generate (1024, "10001");
-    key.privkey = rsa.privatePEM ();
-    return key;
-};
-
-loginbox.prototype.sendPubkeyLoginForm = function () {
+// used by both enroll and login
+loginbox.prototype.pubkeyLoginForm = function () {
     var el = document.getElementById (this.prefix+'.uname');
     var uname = el.value;
     if (! uname) {
@@ -146,44 +150,64 @@ loginbox.prototype.sendPubkeyLoginForm = function () {
 	return;
     }
     var el = document.getElementById (this.prefix+'.temppass');
-    if (el) {
-	var temppass = el.value;
-	var key = this.genAsymmetricKey ();
-	var privkey = key.privkey;
-    } else {
-	var temppass = null;
-	var keyent = this.getCredential (this.credprefix, uname);
-	if (! keyent) {
-	    this.pubkeyEnroll (uname);
-	    return;
-	}
-	var privkey = keyent.privkey;
-    }
-    this.sendPubkeyLogin (uname, temppass, privkey);
+    var temppass = null;
+    if (el)
+	temppass = el.value;    
+    this.sendPubkeyLogin (uname, temppass);
 };
 
-loginbox.prototype.sendPubkeyLogin = function (uname, temppass, privkey) {
-    var rsa = new RSAKey ();
-    rsa.readPrivateKeyFromPEMString (privkey, true);
+// ==begin HOBA==
+
+
+loginbox.prototype.sendPubkeyEnroll = function (user, msg) {
+    var url = this.baseurl+'/login.php';
+    var post = 'enrolldevice=true&uname='+encodeURIComponent (user);
+    var state = this;
+    fetchPhzServer ("POST", url, function (r) {
+			if (r.resp >= 300) {
+			    if (r.resp == state.NOUSER) {
+				state.msg = "No such user "+user;
+				state.pubkeyLogin ();
+			    } else
+				phzAlert (null, "Can't Enroll: "+r.comment);
+			    return;
+			} 
+    }, null, post);
+    this.pubkeyEnroll (user, msg);
+};
+
+
+
+
+loginbox.prototype.sendPubkeyLogin = function (uname, temppass) {
+    var key;
+    if (temppass) {
+	key = this.genKeyPair ();
+    } else {
+	key = this.getCredential (this.credprefix, uname);
+	if (! key) {
+	    key = this.genKeyPair ();	    
+	}
+    }
     var url = "login.php";
     var post = sprintf ("uname=%s",encodeURIComponent (uname));
     if (temppass) {
 	post += '&temppass='+encodeURIComponent (temppass);
-    }    
-    post = rsa.signURL (post);
+    }
+    post = this.signURL (post, key);
     url = this.baseurl + url;
     var state = this;
     fetchPhzServer ("POST", url, function (r, params, sts) {
 	if (r.resp >= 300) {
-	    if (r.resp == 503) {
+	    if (r.resp == state.UNENROLLED) {
 		state.removeCredential (state.credprefix, uname);	
-		state.pubkeyEnroll (uname, "invalid credentials: need to relogin to this device");
+		state.sendPubkeyEnroll (uname, '');
 	    } else
-		phzAlert (null, "can't login: "+r.comment);
+		phzAlert (null, "Can't login: "+r.comment);
 	    return;
 	}
 	if (temppass) {
-	    state.storeKeys (uname, privkey);
+	    state.storeKeys (uname, key.privkey);
 	}	    
 	state.setItem (state.appname+"-curuser", uname);
 	if (state.onLoggedIn)
@@ -196,37 +220,18 @@ loginbox.prototype.sendPubkeyLogin = function (uname, temppass, privkey) {
 };
 
 
-loginbox.prototype.sendPubkeyJoinForm = function () {
-    var el = document.getElementById (this.prefix+'.uname');
-    var uname = el.value;
-    if (! uname) {
-	this.log ("You must supply a username");
-	return;
-    }
-    // XXX: check to see if it's in the credential store first for double join.
-    el = document.getElementById (this.prefix+'.email');
-    var email = el.value;
-    if (email.indexOf ('@') < 0) {
-	this.log ("You must supply a valid email");
-	return;
-    }
-    var key = this.genAsymmetricKey ();
+loginbox.prototype.sendPubkeyJoin = async function (uname, email) {
+    var key = this.genKeyPair ();
     var url = 'join.php';
     var post = sprintf ("uname=%s&email=%s&app=%s",
 		       encodeURIComponent (uname), encodeURIComponent (email),
 		       encodeURIComponent (this.appname));
-    var rsa = new RSAKey ();
-    rsa.readPrivateKeyFromPEMString (key.privkey);
-    post = rsa.signURL (post);
+    post = this.signURL (post, key);
     url = this.baseurl + url;
     var state = this;
     fetchPhzServer ("POST", url, function (r, params, sts) {
 			if (r.resp >= 300) {
-			    state.log ("can't join: "+r.comment);
-			    if (r.resp > 500)
-				phzAlert (null, r.comment);
-			    else
-				phzAlert (null, r.comment);
+			    phzAlert (null, "Cant't join: "+r.comment);
 			    return;
 			}
 			state.storeKeys (uname, key.privkey);
@@ -238,9 +243,7 @@ loginbox.prototype.sendPubkeyJoinForm = function () {
 
 // for logging in from the OTP email
 loginbox.prototype.sendTempPass = function (uname, temppass) {    
-    var key = this.genAsymmetricKey ();
-    var privkey = key.privkey;
-    this.sendPubkeyLogin (uname, temppass, privkey);
+    this.sendPubkeyLogin (uname, temppass);
 };
 
 // credential storage utilities
@@ -253,7 +256,7 @@ loginbox.prototype.storeKeys = function (uname, privkey) {
 loginbox.prototype.setCredential = function (prefix, uname, privkey) {
     var credential = sprintf ('{"uname":"%s", "privkey":"%s", "credate":%d}',
 			      json_slashify (uname), 
-			      json_slashify (RSAKey.stripPEM (privkey)), 
+			      json_slashify (this.fromPEM (privkey)), 
 			      new Date ().getTime ()/1000);
     this.setItem (prefix+'-'+uname, credential);
 };
@@ -262,12 +265,12 @@ loginbox.prototype.getCredential = function (prefix, uname) {
     var keyent = this.getItem (prefix+'-'+uname);
     if (! keyent)
 	return null;
-    var key = jsonEval (keyent);
+    var key = JSON.parse (keyent);
     if (! key) {
 	this.removeItem (prefix+uname);	
 	return null;
     }
-    key.privkey = RSAKey.toPEM (key.privkey, true);
+    key.privkey = this.toPEM (key.privkey, true);
     return key;
 };
 
@@ -289,40 +292,93 @@ loginbox.prototype.removeItem = function (key) {
     localStorage.removeItem (key);
 };
 
+// XXX convert to hoba wrappers for Crypto and classic
+
+loginbox.prototype.genKeyPair = function () {
+    var key = {};
+    if (this.useCrypto) {
+	this._genKeyPair ();
+    } else {
+	var rsa = new RSAKey ();
+	rsa.generate (1024, "10001");
+	key.privkey = rsa.privatePEM ();
+    }
+    return key;
+};
+
+function ab2str(buf) {
+    return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+
+
+loginbox.prototype._genKeyPair = async function () {
+    var alg = {
+	name: " RSASSA-PKCS1-v1_5",
+	modulusLength: 2048,
+	publicExponent: new Uint8Array([1, 0, 1]),
+	hash: "SHA-256"
+    };    
+    var alg = {
+	name: "RSASSA-PKCS1-v1_5",
+	hash: {
+	    name: "SHA-256"
+	},
+	modulusLength: 2048,
+	extractable: false,
+	publicExponent: new Uint8Array([1, 0, 1])
+    }
+    //var alg = { name: "ECDSA", namedCurve: "P-384" };
+    var use = ["sign", "verify"];
+    var key = await this.subtle.generateKey (alg, true, use);
+    console.log ("k=", key);
+    var pkArray = await window.crypto.subtle.exportKey("spki", key.publicKey);
+    var pkb64 =  btoa (ab2str(pkArray));
+    var rv = { pubb64: pkb64 };
+    console.log ("pubb64=", pkb64);
+    pkArray = await window.crypto.subtle.exportKey("pkcs8", key.privateKey);
+    pkb64 =  btoa (ab2str(pkArray));
+    rv.privb64 = pkb64;
+    console.log ("privb64=", pkb64);
+    window.xrv = rv;
+};
+
+loginbox.prototype.signURL = function (url, key) {
+    var rsa = new RSAKey ();
+    rsa.readPrivateKeyFromPEMString (key.privkey, true);    
+    var pkey = rsa.publicPEM ();
+    var pubkey = this.fromPEM (pkey);
+    url += '&pubkey='+ encodeURIComponent (pubkey);
+    url += '&curtime='+ new Date ().getTime ()/1000;
+    var sig = hex2b64 (rsa.signString(url, 'sha1'));        
+    url +='&signature=' + encodeURIComponent (sig);
+    return url;
+};
+
+loginbox.prototype.fromPEM = function (pkey) {
+    var key = pkey.split ("\n");
+    var out = '';
+    for (var i = 1; i < key.length-1; i++)
+	out += key [i];
+    return out;
+};
+
+loginbox.prototype.toPEM = function (pkey, ispriv) {
+    if (ispriv)
+	var key = "-----BEGIN RSA PRIVATE KEY-----\n";
+    else
+	var key = "-----BEGIN PUBLIC KEY-----\n";
+    for (var i = 0; i < pkey.length; i += 64) {
+	key += pkey.substr (i, 64)  + "\n";	
+    }
+    if (ispriv)
+	key += "-----END RSA PRIVATE KEY-----\n";
+    else
+	key += "-----END PUBLIC KEY-----\n";
+    return key;
+};
 
 
 // ==end HOBA==
 
-loginbox.prototype.log = function (str) {
-    phzAlert(null, str);
-};
 
-loginbox.prototype.readCookie = function (name) {
-	var nameEQ = name + "=";
-	var ca = document.cookie.split(';');
-	for(var i=0;i < ca.length;i++) {
-		var c = ca[i];
-		while (c.charAt(0)==' ') c = c.substring(1,c.length);
-		if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
-	}
-	return null;
-};
-
-loginbox.prototype.visible = function () {
-    return this.pane.isDisplay ();
-};
-
-loginbox.prototype.setMessage = function (msg) {
-    var el = document.getElementById (this.prefix+'.lbmsg');
-    if (! msg)
-	msg = '';
-    if (el) {
-	if (msg) {
-	    reliableNewc (el, msg);
-	    el.style.display = 'block';
-	} else
-	    el.style.display = 'none';
-    }
-    this.msg = msg;
-};
 

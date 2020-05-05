@@ -62,8 +62,6 @@ function gooduser ($user) {
 function goodemail ($email) {
     global $u;
     $rv = validEmail ($email);
-    if (! $rv)
-	error_log ("bad email address: $email from " . ($u ? $u->uname : "unknown"));
     return  $rv;
 }
 

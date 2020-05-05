@@ -26,11 +26,11 @@ function setlogin ($u) {
 
 
 if (($swdb = new dbif ()) == NULL) {
-    sendResp (400, "dbdown", NULL);
+    sendResp (DBDOWN, "dbdown", NULL);
 }
 
 if (($u = $swdb->fetchUser ($opts ['uname'])) == NULL) {
-    sendResp (505, "No such user", NULL);
+    sendResp (NOUSER, "No such user", NULL);
 }
 
 // login specific checks
@@ -44,6 +44,6 @@ hobaFinishLogin ($u, $opts);
 $_SESSION ['uname'] = $opts ['uname'];
 $_SESSION ['lastaccess'] = time ();
 setlogin ($u);
-sendResp (200, NULL, NULL);
+sendResp (OK, NULL, NULL);
 
 ?>

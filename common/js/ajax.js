@@ -23,7 +23,6 @@ function fetchServer (method, query, fn, param, post) {
 	}
     };
     req.open(method, query);
-    window.xreq = req;
     if (method == 'GET')
 	req.send(null); 
     else if (method == 'POST') {
@@ -61,59 +60,6 @@ function phzResp (resp) {
 	this.resp = 402;
 	return;
     }
-    if (this.resp == '502') {
-        //top.location = "index.php?m=nosess";
-	var newloc = top.location.toString ();
-	if (newloc.indexOf ('?') >= 0)
-	    newloc += "&m=nosess";
-	else
-	    newloc += "?m=nosess";
-	top.location = newloc;
-    }
     this.comment = resp.substr (r+1, i-r-1);
     this.body = resp.substr (i+1, resp.length);
 }
-
-function jsonEval (str) {
-    try {
-	return JSON.parse (str);
-    } catch (e) {
-	return eval ('('+str+')');
-    }
-}
-
-function facebookPost (apikey, user, date, update) {
-    var next = sprintf ("%sfbapp.php?mode=postday&buddy=%s&name=%s&message=%s&show=%s&trophy=%s&awid=%s&to=%s", baseurl,
-			encodeURIComponent (user), encodeURIComponent (date),
-			encodeURIComponent (update.synopsis), 
-			encodeURIComponent (update.fbshow), encodeURIComponent (update.fbtrophy), 
-			encodeURIComponent (update.fbawid), encodeURIComponent (update.returl));
-    var cancel = sprintf ("%sfbapp.php?mode=cancelday&buddy=%s&name=%s&message=%s&to=%s", baseurl,
-			  encodeURIComponent (user), encodeURIComponent (date),
-			  encodeURIComponent (update.synopsis), encodeURIComponent (update.returl));
-    if (false) {
-    var url = sprintf ("http://www.facebook.com/login.php?api_key=%s&display=popup&extern=1&fbconnect=1&req_perms=publish_stream&return_session=1&v=1.0&next=%s&fb_connect=1&cancel_url=%s",
-			       apikey, encodeURIComponent (next), encodeURIComponent (cancel));
-    } else {
-	url = next;
-    }
-    top.location = url;
-}
-
-function twitterPost (user, date, update) {
-    var url = sprintf ("%stwcmd.php?cmd=postday&buddy=%s&date=%s&to=%s", baseurl,
-			encodeURIComponent (user), encodeURIComponent (date),
-			encodeURIComponent (update.returl));
-    top.location = url;
-}
-
-function gPlusPost (user, date, update) {
-    var url = sprintf ("%sgpluscmd.php?mode=postday&buddy=%s&name=%s&message=%s&show=%s&trophy=%s&awid=%s&to=%s", baseurl,
-			encodeURIComponent (user), encodeURIComponent (date),
-			encodeURIComponent (update.synopsis), 
-			encodeURIComponent (update.fbshow), encodeURIComponent (update.fbtrophy), 
-			encodeURIComponent (update.fbawid), encodeURIComponent (update.returl));
-
-    top.location = url;
-}
-

@@ -11,6 +11,17 @@
 
 require_once ("../common/php/mailif.php");
 
+define ("OK", 200);
+define ("DBDOWN", 400);
+define ("SERVERERROR", 500);
+define ("BADREQUEST", 501);
+define ("SIGERROR", 502);
+define ("UNENROLLED", 503);
+define ("NOUSER", 505);
+define ("BADUSER", 506);
+define ("BADEMAIL", 507);
+define ("USERTAKEN", 508);
+
 // This is the heart of the server side HOBA code. This just a simplified version of what would need to take place on any authentication backend.
 // You can see what the needed fields are by looking at dbs/dbdefs.sql with both the user table and the userpubkeys and userpubkeyreplaycache tables
 
@@ -23,27 +34,27 @@ function hobaChecks ($opts) {
     $body = file_get_contents('php://input');
     $pos = strpos ($body, "&signature=");
     if ($pos === false) 
-        sendResp (500, "signature not found", NULL);
+        sendResp (SIGERROR, "signature not found", NULL);
     $body = substr ($body, 0, $pos);
     if (! isset ($opts ['pubkey'])) {
-        sendResp (500, "bad login auth method", NULL);
+        sendResp (SIGERROR, "bad login auth method", NULL);
     }
     $pkeyid = openssl_get_publickey(toPEM ($opts ['pubkey']));
     if (! $pkeyid) {
-        sendResp (503, "bad pubkey format", NULL);
+        sendResp (SIGERROR, "bad pubkey format", NULL);
     }
     // check for freshness
     if ($opts ['curtime'] > time ()+3600) {
-        sendResp (500, "time too far in the future", NULL);
+        sendResp (SIGERROR, "time too far in the future", NULL);
     }
     if ($opts ['curtime'] < time ()-3600) {
-        sendResp (500, "stale signature", NULL);
+        sendResp (SIGERROR, "stale signature", NULL);
     }
     if ($swdb->fetchUserPubkeyReplayCache ($opts ['signature'])) {
-        sendResp (500, "replay detected", NULL);
+        sendResp (SIGERROR, "replay detected", NULL);
     }
     if (! openssl_verify ($body, base64_decode ($opts ['signature']), $pkeyid)) {
-        sendResp (503, "bad signature", NULL);
+        sendResp (SIGERROR, "bad signature", NULL);
     }
     $swdb->appendUserPubkeyReplayCache ($opts ['signature'], $opts ['curtime'], time ()+3600);
     $swdb->purgeUserPubkeyReplayCache (time ());
@@ -59,20 +70,20 @@ function hobaLoginChecks ($u, $opts) {
         // set the password for a 30 minute validity 
         $swdb->setUserTempPass ($u->uid, $temppass, time ()+1800);
         $loginurl = sprintf ("https:%sindex.php?uname=%s&temppass=%s", $baseurl, urlencode ($u->uname), urlencode ($temppass));
-        error_log ("$loginurl");
         $helpnote = "A new device is requesting access to your $appName for $u->uname. To allow this device access use this code: <a href=\"$loginurl\">$temppass</a>\nIf you don't approve, do nothing.";
         mailto ($u->email, "$appName login information", $helpnote);
-        sendResp (200, "Check your email your OTP to login", NULL);
+        sendResp (OK, "Check your email your OTP to login", NULL);
     }
     $pubkey = $swdb->fetchUserPubkey ($u->uid, $opts['pubkey']);
     if (isset ($opts ['temppass'])) {
         if (trim ($opts ['temppass']) != $u->temppass)
-            sendResp (500, "invalid OTP", NULL);
+            sendResp (SIGERROR, "invalid OTP", NULL);
         if ($u->temppasstmo < time ())
-            sendResp (500, "OTP expired", NULL);
+            sendResp (SIGERROR, "OTP expired", NULL);
     } else {
-        if (! $pubkey)
-            sendResp (503, "Unenrolled key", NULL);
+        if (! $pubkey) {
+            sendResp (UNENROLLED, "Unenrolled key", NULL);
+        }
     }
     return true;
 }

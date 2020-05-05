@@ -40,27 +40,23 @@ function unameok ($name) {
 
 if (@$opts ['mode'] == 'test') {
     if (($u = $swdb->fetchuser ($opts ['uname'])) == NULL) {
-        die ("505 no such user\n");
+        sendResp (NOUSER, "no such user");        
     }
 }
 
 $badto = NULL;
 $params = array ('uname', 'email', 'pubkey', 'signature');
 if (($p = valid ($params))) {
-    sendResp (500, "missing$p", $badto);
-}
-
-if (! isset ($opts ['pubkey'])) {
-    sendResp (500, "bad login method");
+    sendResp (BADREQUEST, "missing$p", $badto);
 }
 
 $opts ['user'] = "";
 if (! gooduser ($opts ['uname']) || unameok ($opts ['uname']) == 0) {
-    sendResp (507, "Illegal user name", $badto);
+    sendResp (BADUSER, "Illegal user name", $badto);
 }
 
 if (! goodemail ($opts ['email'])) {
-    sendResp (506, "Email Address doesn't exist or is not formatted correctly", $badto);
+    sendResp (BADEMAIL, "Email Address doesn't exist or is not formatted correctly", $badto);
 }
 $opts ['email'] = fixemail ($opts ['email']);
 
@@ -77,7 +73,7 @@ if ($u = $swdb->fetchuser ($opts ['uname'])) {
     if (! $pubkey) {
         // this is a special case for initial bonding of the admin account to the first to login as it
         if ($opts ['uname'] != 'root') {
-            sendResp (505, "User name ${opts['uname']} taken", NULL);
+            sendResp (USERTAKEN, "User name ${opts['uname']} taken", NULL);
         }
     }
 }
@@ -88,7 +84,7 @@ hobaChecks ($opts);
 if ($rejoin) {
     $_SESSION ['uname'] = $opts ['uname'];
     $_SESSION ['lastaccess'] = time ();
-    sendResp (200, "You've already joined, but you're now logged in", NULL);
+    sendResp (OK, "You've already joined, but you're now logged in", NULL);
     $swdb->updAccess ($u->uid);
     exit (0);
 }
@@ -103,7 +99,7 @@ $_SESSION ['lastaccess'] = time ();
 // finish up the join process 
 hobaFinishJoin ($u, $opts);
 
-sendResp (200, "Welcome aboard $u->uname", "");
+sendResp (OK, "Welcome aboard $u->uname", "");
 
 
 ?>

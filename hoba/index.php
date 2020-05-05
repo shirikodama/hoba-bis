@@ -26,7 +26,6 @@ $jsl->addFile ("../common/js/utils.js");
 $jsl->addFile ("../common/js/htmlutils.js");
 $jsl->addFile ("../common/js/htmlpane.js");
 $jsl->addFile ("../common/js/dialogs.js");
-$jsl->addFile ("../common/js/loginbox.js");
 $jsl->addFile ("../common/js/ajax.js");
 $jsl->addFile ("js/rsalib/jsbn.js");
 $jsl->addFile ("js/rsalib/jsbn2.js");
@@ -39,8 +38,8 @@ $jsl->addFile ("js/rsalib/rsasign-1.2.js");
 $jsl->addFile ("js/rsalib/asn1hex-1.1.js");
 $jsl->addFile ("js/rsalib/rsatopem.js");
 $jsl->addFile ("js/rsalib/securerandom.js");
-$jsl->addFile ("js/rsautil.js");
 $jsl->addFile ("css/style.css");
+$jsl->addFile ("../common/js/loginbox.js");
 $jsl->addFile ("js/main.js");
 $jsl->load ();
 
