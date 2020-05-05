@@ -23,7 +23,7 @@ function loginbox (prefix, appname, baseurls, containers) {
     this.pane.setStackable(true);
     this.pane.pos (50, 50);
     this.paneWidth = 300;
-    this.paneHeight = 250;
+    this.paneHeight = 300;
     this.pane.display (0);
     this.msg = '';
     this.pubkeyLoginEnabled = window.Crypto && navigator.credentials;
@@ -62,10 +62,9 @@ loginbox.prototype.pubkeyLogin = function () {
     if (! user)
 	user = '';
     //this.log("user to login is " + user);
-    html += sprintf ('<div><table><tr ><tr><td><b>Username</b><td><input id='+this.prefix+'.uname value="%s" size=16>', user);
-    html += "<tr><td valign=top><b>Remember</b><td><input type=checkbox id="+this.prefix+".remember value=1 checked=checked>";
-    html += '<tr><td valign=top colspan=2>'+phzbutton ('', 'Login', this.prefix+'.sendPubkeyLoginForm ()','float:right');
-    html += '<tr><td><a class=mediumA href=# onclick="'+this.prefix+'.join ()">Join Now</a>';
+    html += sprintf ('<div><table><tr ><tr><td><b>Username</b><td><input id='+this.prefix+'.uname value="%s" size=16>', user)+'</td></tr>';
+    html += '<tr><td valign=bottom colspan=2><br>'+phzbutton ('', 'Login', this.prefix+'.sendPubkeyLoginForm ()','float:right')+'</td></tr>';
+    html += '<tr><td><a class=mediumA href=# onclick="'+this.prefix+'.join ()">Join Now</a></td></tr>';
     html += '</table></div>';
     this.pane.size (this.paneWidth, this.paneHeight);
     this.pane.reliableNewc (html);
@@ -85,11 +84,11 @@ loginbox.prototype.pubkeyJoin = function () {
     html += '<div id='+this.prefix+'.lbmsg class=newX>'+this.msg+'</div>';
     html += '<div class="paneContents">';
     html += '<table>';
-    html += '<tr><td><b>Username</b><td><input id='+this.prefix+'.uname size=16>';
-    html += '<tr><td><b>Email Address</b><td><input id='+this.prefix+'.email size=16>';
-    html += '<tr><td colspan=2>'+phzbutton ('smjoin', 'Join', this.prefix+".sendPubkeyJoinForm ()", "float:right");
+    html += '<tr><td><b>Username</b><td><input id='+this.prefix+'.uname size=16></td></tr>';
+    html += '<tr><td><b>Email Address</b><td><input id='+this.prefix+'.email size=16>'+'</td></tr>';
+    html += '<tr><td colspan=2><br>'+phzbutton ('smjoin', 'Join', this.prefix+".sendPubkeyJoinForm ()", "float:right")+'</td></tr>';
+    html += '<tr><td><a class=mediumA href=# onclick="'+this.prefix+'.login ()">Login</a></td></tr>';
     html += '</table>';
-    html += '<tr><td><a class=mediumA href=# onclick="'+this.prefix+'.login ()">Login</a>';
     html += '</div>';
     this.pane.reliableNewc (html);
     this.pane.size (this.paneWidth, this.paneHeight);
@@ -99,9 +98,10 @@ loginbox.prototype.pubkeyJoin = function () {
 
 loginbox.prototype.pubkeyEnroll = function (user, msg) {
     var html = '';
-    var url = this.baseurl+'login.php?mode=ajax&enrolldevice=1&uname='+encodeURIComponent (user);
+    var url = this.baseurl+'/login.php';
+    var post = 'enrolldevice=1&uname='+encodeURIComponent (user);
     var state = this;
-    fetchPhzServer ("GET", url, function (r) {
+    fetchPhzServer ("POST", url, function (r) {
 			if (r.resp >= 300) {
 			    if (r.resp == 505) {
 				state.msg = "No such user "+user;
@@ -110,14 +110,13 @@ loginbox.prototype.pubkeyEnroll = function (user, msg) {
 				phzAlert (null, "can't send mail: "+r.comment);
 			    return;
 			} 
-		    });
+    }, null, post);
     html += this.pane.title ("Enable New Device", this.prefix+".pane.display(0);");
     if (msg)
 	html += '<div id='+this.prefix+'.lbmsg class=newX>'+msg+'</div>';
     html += '<div class="paneContents">';    
     html += sprintf ('<table><tr><td><b>Username</b><td><input id='+this.prefix+'.uname value="%s" size=16 readonly>', user);
     html += '<tr><td><b>OTP (from email)</b><td><input id='+this.prefix+'.temppass size=16>';
-    html += "<tr><td valign=top><b>Remember me</b><td><input type=checkbox id="+this.prefix+".remember value=1 checked=checked>";
     html += '<tr><td valign=top colspan=2>'+phzbutton ('', 'Send', this.prefix+'.sendPubkeyLoginForm ()','float:right');
     html += '</table>';
     html += '<h4>Check your email now for the one time password to start using this device</h4>';
@@ -146,11 +145,6 @@ loginbox.prototype.sendPubkeyLoginForm = function () {
 	phzAlert (null, "You must supply a username");
 	return;
     }
-    var el = document.getElementById (this.prefix+'.remember');
-    if (el)
-	var remember = el.checked;
-    else
-	var remember = true;
     var el = document.getElementById (this.prefix+'.temppass');
     if (el) {
 	var temppass = el.value;
@@ -165,39 +159,40 @@ loginbox.prototype.sendPubkeyLoginForm = function () {
 	}
 	var privkey = keyent.privkey;
     }
-    this.sendPubkeyLogin (uname, remember, temppass, privkey);
+    this.sendPubkeyLogin (uname, temppass, privkey);
 };
 
-loginbox.prototype.sendPubkeyLogin = function (uname, remember, temppass, privkey) {
+loginbox.prototype.sendPubkeyLogin = function (uname, temppass, privkey) {
     var rsa = new RSAKey ();
-    if (! remember) {
-	this.removeCredential (this.credprefix, uname);	
-    }
     rsa.readPrivateKeyFromPEMString (privkey, true);
-    var url = sprintf ("login.php?mode=ajax&uname=%s",encodeURIComponent (uname));
+    var url = "login.php";
+    var post = sprintf ("uname=%s",encodeURIComponent (uname));
     if (temppass) {
-	url += '&temppass='+encodeURIComponent (temppass);
-    }
-    url = rsa.signURL (url);
+	post += '&temppass='+encodeURIComponent (temppass);
+    }    
+    post = rsa.signURL (post);
     url = this.baseurl + url;
     var state = this;
-    fetchPhzServer ("GET", url, function (r, params, sts) {
-			if (r.resp >= 300) {
-			    if (r.resp == 503) {
-				state.removeCredential (state.credprefix, uname);	
-				state.pubkeyEnroll (uname, "invalid credentials: need to relogin to this device");
-			    } else
-				phzAlert (null, "can't login: "+r.comment);
-			    return;
-			}
-			if (remember && temppass) {
-			    state.storeKeys (uname, privkey);
-			}	    
-			state.setItem (state.appname+"-curuser", uname);
-			if (state.onLoggedIn)
-			    state.onLoggedIn (false, uname);
-			state.pane.display (0);
-		    });
+    fetchPhzServer ("POST", url, function (r, params, sts) {
+	if (r.resp >= 300) {
+	    if (r.resp == 503) {
+		state.removeCredential (state.credprefix, uname);	
+		state.pubkeyEnroll (uname, "invalid credentials: need to relogin to this device");
+	    } else
+		phzAlert (null, "can't login: "+r.comment);
+	    return;
+	}
+	if (temppass) {
+	    state.storeKeys (uname, privkey);
+	}	    
+	state.setItem (state.appname+"-curuser", uname);
+	if (state.onLoggedIn)
+	    state.onLoggedIn (false, uname);	
+	state.pane.display (0);
+	if (temppass) {
+	    top.location.href = top.location.pathname;
+	}
+    }, null, post);
 };
 
 
@@ -216,15 +211,16 @@ loginbox.prototype.sendPubkeyJoinForm = function () {
 	return;
     }
     var key = this.genAsymmetricKey ();
-    var url = sprintf ("join.php?mode=ajax&uname=%s&email=%s&app=%s",
+    var url = 'join.php';
+    var post = sprintf ("uname=%s&email=%s&app=%s",
 		       encodeURIComponent (uname), encodeURIComponent (email),
 		       encodeURIComponent (this.appname));
     var rsa = new RSAKey ();
     rsa.readPrivateKeyFromPEMString (key.privkey);
-    url = rsa.signURL (url);
+    post = rsa.signURL (post);
     url = this.baseurl + url;
     var state = this;
-    fetchPhzServer ("GET", url, function (r, params, sts) {
+    fetchPhzServer ("POST", url, function (r, params, sts) {
 			if (r.resp >= 300) {
 			    state.log ("can't join: "+r.comment);
 			    if (r.resp > 500)
@@ -237,15 +233,14 @@ loginbox.prototype.sendPubkeyJoinForm = function () {
 			if (state.onLoggedIn)
 			    state.onLoggedIn (true, uname);
 			state.pane.display (0);
-		    });
+    }, null, post);
 };
 
-loginbox.prototype.checkTempPass = function (uname, temppass) {    
-    if (! temppass)
-	return;
+// for logging in from the OTP email
+loginbox.prototype.sendTempPass = function (uname, temppass) {    
     var key = this.genAsymmetricKey ();
     var privkey = key.privkey;
-    this.sendPubkeyLogin (uname, true, temppass, privkey);
+    this.sendPubkeyLogin (uname, temppass, privkey);
 };
 
 // credential storage utilities

@@ -12,19 +12,9 @@
 /* Edit History: 
  */
 
-function fetchServer (method, query, fn, param) {
+function fetchServer (method, query, fn, param, post) {
     var req;
-    try {
-	// Firefox, Opera 8.0+, Safari, IE7+
-	req = new XMLHttpRequest(); // xmlHttp is now a XMLHttpRequest.
-    } catch (e) {
-	// Internet Explorer
-	try {
-	    req = new ActiveXObject("Msxml2.XMLHTTP");
-	} catch (e) {
-	    req = new ActiveXObject("Microsoft.XMLHTTP");
-	}
-    }
+    req = new XMLHttpRequest(); // xmlHttp is now a XMLHttpRequest.
     req.onreadystatechange = function() {
 	if (req.readyState == 4) {
 	    if (req.status >= 200 || ! req.status) {
@@ -32,45 +22,26 @@ function fetchServer (method, query, fn, param) {
 	    }
 	}
     };
-    req.open(method, query); // .open(RequestType, Source);
+    req.open(method, query);
+    window.xreq = req;
     if (method == 'GET')
-	req.send(null); // Since there is no supplied form, null takes its place 
-    else {
-	req.post = function (postdata, type) {
-	    if (type)
-		req.setRequestHeader("Content-type", type);
-	    else
-		req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-	    req.send(postdata); 
-	};
+	req.send(null); 
+    else if (method == 'POST') {
+	req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+	req.send(post);
     }
     return req;
 }
 
 // Phresheez style server call with parsed standardized response header, and auth url handling
 
-function fetchPhzServer (method, query, fn, param) {
-    if (method == 'GET') {
-	query = phzURL (query, false);
-    }
+function fetchPhzServer (method, query, fn, param, post) {
     var nfn = function (resp, param, sts) {
 	var r = new phzResp (resp);
 	fn (r, param, sts);
     };
-    var req = fetchServer (method, query, nfn, param);
+    var req = fetchServer (method, query, nfn, param, post);
     return req;
-}
-
-function phzURL (url, force) {
-    var sep = url.indexOf ('?') >= 0 ? '&' : '?';
-    if (isWidget ()) {
-	url += sep+'basicauth=1';
-	sep = '&';
-    }
-    if (force) {
-	url += sep + 'cb=' + Math.random ();
-    }
-    return url;
 }
 
 // process the response code from a async call; return body

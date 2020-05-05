@@ -517,8 +517,8 @@ htmlpane.prototype.mousemove = function (ev) {
 	dy = ev.clientY - this.dragy;
 	if (! this.resize) {	    
 	    this.x = (parseInt(this.el.style.left+0) + dx);
-	    if (this.x < -SBWIDTH)
-		this.x = -SBWIDTH;
+	    if (this.x < 0)
+		this.x = 0;
 	    this.y = (parseInt(this.el.style.top+0) + dy);
 	    if (this.y < 0)
 		this.y = 0;

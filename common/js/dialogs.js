@@ -87,7 +87,7 @@ function phzInfo (title, msg) {
 	phzInfo.pane.setStackable (true);
     }
     var x = f_scrollLeft () + (f_clientWidth()-size.w)/2;
-    var y = f_scrollTop + (f_clientHeight()-200)/2;
+    var y = f_scrollTop () + (f_clientHeight()-size.h)/2;
     if (x < 0)
 	x = 0;
     if (y < 0)
@@ -102,38 +102,6 @@ function phzInfo (title, msg) {
     setTimeout (function () {
 	phzInfo.pane.display (0);
     }, 1500);
-}
-
-
-
-function debugmsg () {
-    var ddiv = document.getElementById("__debug");
-    var rv = vsprintf (arguments);    
-    rv = rv.replace (/</g, "&lt;");
-    rv = rv.replace (/>/g, "&gt;");
-    rv = rv.replace (/\n/g, "<br>");
-    if (ddiv == null) {
-	reliableNewc (document.body, document.body.innerHTML + rv);
-    } else {
-	ddiv.style.display = 'inline';
-	reliableNewc (ddiv, ddiv.innerHTML + rv);
-    }
-}
-
-function debugwrt (s) {
-    var ddiv = document.getElementById("__debug");
-    if (ddiv == null) {
-	return;
-    }
-    reliableNewc (ddiv, ddiv.innerHTML + s);
-    ddiv.style.display = 'inline';
-}
-
-function dbgclear () {
-    var ddiv = document.getElementById("__debug");
-    if (ddiv == null)
-	return;
-    reliableNewc (ddiv, '');
 }
 
 function htmlprogress () {

@@ -43,6 +43,15 @@ $jsl->addFile ("js/rsautil.js");
 $jsl->addFile ("css/style.css");
 $jsl->addFile ("js/main.js");
 $jsl->load ();
+
+$user = '';
+if (@$opts['uname'])
+    $user = $opts['uname'];
+else if ($u)
+    $user = $u->uname;
+
+$temppass = isset ($opts['temppass']) ? $opts['temppass'] : '';
+
 ?>
 <script type=text/javascript>
 
@@ -52,7 +61,11 @@ phzicons = stdSprite ('phzicons');
 phzicons.setBaseURL (baseurl);
 
 onloader (function () {
-      st.main = new mainPage ('st.main', {app:'mainpage', main:'maincontainer', 'img':'../common/imgs/hoba-meteor.jpg', title:'The Hoba Meteorite in Namibia', loginbox:'loginpanecontainer', user:'<?php print($u ? $u->uname : '') ?>'});
+    st.main = new mainPage ('st.main',
+           {app:'mainpage', main:'maincontainer', 'img':'../common/imgs/hoba-meteor.jpg',
+                   title:'The Hoba Meteorite in Namibia', loginbox:'loginpanecontainer', user:'<?php print($user)  ?>',
+                   temppass:'<?php print($temppass) ?>'                  
+                   });
 });
 
 </script>
@@ -68,15 +81,19 @@ onloader (function () {
 <li>This site does spectacularly little after logging in. This is a feature, not a bug</li>
 <li>If you want to clear all of your local keys click <a href="javascript:void(0)" onclick="st.main.clearCredentials ()">Clear</a></li>
 </ul>
-<h4>Following Along in the Code</h4>
+
+<h4>How HOBA works</h4>
 <ul>
-<li>You can view the code here at <a href="https://github.com/shirikodama/hoba-bis" target="_blank">HOBA-bis repo</a> if you want to follow along with what's going on with the demo</li>
-<li>Most of the action wrt HOBA in the code is happening in common/js/loginbox.js for signing, login.php for verifying and enrolling new keys and join.php for signing up. The HOBA specific parts of loginbox.js are what would need to be integrated with your own login UI. The HOBA specific parts of login.php and join.php would need to be integrated with your user database and authentication backend</li>
-<li>In this example email provides an out of band mechanism for the server to send an OTP to prove ownership of the account. SMS and other mechanisms can also be employed</li>
 <li><b>Login Flow</b> Get the user name and fetch the key pair from the credential store. Generate the URL and sign the URL. Client sends the login request to login.php. Server verifies the signature and responds with an HTTP style response code</li>
 <li><b>Initial Join Flow</b> Get the user name and email. Generate a new key pair and store the key pair for this user. Generate the URL. Sign the URL and send to join.php. Server verifies the signature, and fails if it doesn't verify. Server then checks to see if user name is available, and if available creates a new user and stores the public key in a table of userid/publickey touples. Server then responds with a HTTP style response code</li>
 <li><b>Enroll New Device Flow</b> Get the user name and find that it doesn't have a credential. Generate a new key pair and store it for the user. Generate the URL with the new public key to be enrolled. Sign the URL and send to login.php (from the user's standpoint they are just logging in). Server verifies the signature, and fails if it doesn't verify. Server emails an OTP to the user. User gets email and enters OTP on the client. Client then sends a new login request with the OTP and public key to login.php. Server verifies the signature and the OTP and stores the new public key in a table of userid/publickey touples. Server then responds with a HTTP style response code</li>
 <li>Logout has nothing to do with HOBA per se... it just kills off the session cookie as usual</li>
+</ul>
+<h4>Following Along in the Code</h4>
+<ul>
+<li>You can view the code here at <a href="https://github.com/shirikodama/hoba-bis" target="_blank">HOBA-bis repo</a> if you want to follow along with what's going on with the demo</li>
+<li>Most of the action wrt HOBA in the code is happening in common/js/loginbox.js for signing, the main hoba module is common/php/hobacmn.php which is used by login.php for verifying and enrolling new keys and join.php for signing up. The HOBA specific parts of loginbox.js are what would need to be integrated with your own login UI. The HOBA specific parts of login.php and join.php would need to be integrated with your user database and authentication backend</li>
+<li>In this example email provides an out of band mechanism for the server to send an OTP to prove ownership of the account. SMS and other mechanisms can also be employed</li>
 <li>Like most things, most of this is UI. Don't let that deter you. I've tried to point out the juicy bits to show what is actually new and different in the code.</li>
 <li>If you complain that the backend is written in PHP, you will be obligated to write it in your own favorite language</li>
 <li>If you can lift the Hoba you can win valuable prizes</li>
@@ -87,12 +104,8 @@ onloader (function () {
 <ul>
    <li>It's an open question whether time based freshness is ok. The flows can always be rewritten to use a nonce-based challenge for replays</li>
    <li>This code doesn't support email verification for join, but it would work the same as password based enroll</li>
-   <li>There isn't currently a way to revoke a device in the code. This would definitely need to be implemented in a real deployment for lost or stolen devices; another reason why the credential store needs to be protected</li>
-   <li>Is there a HOBA specific DOS attack against the server with reenroll via email? Or is this a generic problem with using out of band verification of a new device login?</li>
-   <li>This should be using POST's instead of GET's</li>
    <li>I make an effort at dealing with edge cases, but this is a prototype so it's likely that I've missed some</li>
-   <li>It would be nice to just click on the OTP in the mail client</li>
-   <li>There is currently no way to delete a user. This should be tested out wrt local credentials</li>
+   <li>There is currently no way to delete a user. Stale credentials just get rejected for no such user when logging in</li>
    <li></li>
 </ul>    
 </p>

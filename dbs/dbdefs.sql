@@ -9,7 +9,6 @@ CREATE TABLE `userpubkeys` (
   `uid` integer,
   `pubkey` text,
   `credate` integer DEFAULT NULL,
-  `platform` varchar(16) DEFAULT NULL
 );
 DROP TABLE IF EXISTS `users`;
 

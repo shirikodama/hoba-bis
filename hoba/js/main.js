@@ -34,6 +34,8 @@ function mainPage (prefix, opts) {
 	state.display ();
     };
     this.display ();
+    if (opts.temppass)
+	this.lb.sendTempPass (this.opts.user, this.opts.temppass);
 };
 
 
