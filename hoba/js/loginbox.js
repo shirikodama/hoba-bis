@@ -27,19 +27,17 @@ function loginbox (prefix, appname, baseurls, containers) {
     this.pane.display (0);
     this.msg = '';
     this.pubkeyLoginEnabled = window.Crypto && navigator.credentials;
-    if (this.pubkeyLoginEnabled) {
-	this.subtle = window.crypto.subtle;
-	this.alg = {
-	    name: "RSASSA-PKCS1-v1_5",
-	    hash: {
-		name: "SHA-256",
-		classicname: "sha256",
-	    },
-	    modulusLength: 1024,
-	    extractable: true,
-	    publicExponent: new Uint8Array([1, 0, 1]),
-	};	
-    }
+    this.subtle = window.crypto.subtle;
+    this.alg = {
+	name: "RSASSA-PKCS1-v1_5",
+	hash: {
+	    name: "SHA-256",
+	    classicname: "sha256",
+	},
+	modulusLength: 1024,
+	extractable: true,
+	publicExponent: new Uint8Array([1, 0, 1]),
+    };	
     this.credprefix = appname;
     this.onLoggedIn = null;
     this.OK = 200;
@@ -74,8 +72,8 @@ loginbox.prototype.pubkeyJoin = function () {
     html += '<div id='+this.prefix+'.lbmsg class=newX>'+this.msg+'</div>';
     html += '<div class="paneContents">';
     html += '<table>';
-    html += '<tr><td><b>Username</b><td><input id='+this.prefix+'.uname size=16></td></tr>';
-    html += '<tr><td><b>Email Address</b><td><input id='+this.prefix+'.email size=16>'+'</td></tr>';
+    html += '<tr><td><b>User Name</b><td><input id='+this.prefix+'.uname size=16></td></tr>';
+    html += '<tr><td><b>Email</b><td><input id='+this.prefix+'.email size=16>'+'</td></tr>';
     html += '<tr><td><b>WebCrypto?</b><td><input type="checkbox" checked id='+this.prefix+'.webcrypto>(unchecked = js RSA)'+'</td></tr>';    
     html += '<tr><td colspan=2><br>'+phzbutton ('smjoin', 'Join', this.prefix+".pubkeyJoinForm ()", "float:right")+'</td></tr>';
     html += '<tr><td><a class=mediumA href=# onclick="'+this.prefix+'.login ()">Login</a></td></tr>';
@@ -91,12 +89,12 @@ loginbox.prototype.pubkeyJoinForm = function () {
     var el = document.getElementById (this.prefix+'.uname');
     var uname = el.value;
     if (! uname) {
-	this.log ("You must supply a username");
+	this.log ("You must supply a user name");
 	return;
     }
     // XXX: we could check to see if it's in the credential store first for double join.
     el = document.getElementById (this.prefix+'.email');
-    var email = el.value;
+    var email = el.value || '';
     if (email.indexOf ('@') < 0) {
 	this.log ("You must supply a valid email");
 	return;
@@ -123,7 +121,7 @@ loginbox.prototype.pubkeyLogin = function () {
     if (! user)
 	user = '';
     //this.log("user to login is " + user);
-    html += sprintf ('<div><table><tr ><tr><td><b>Username</b><td><input id='+this.prefix+'.uname value="%s" size=16>', user)+'</td></tr>';
+    html += sprintf ('<div><table><tr ><tr><td><b>User Name</b><td><input id='+this.prefix+'.uname value="%s" size=16>', user)+'</td></tr>';
     html += '<tr><td valign=bottom colspan=2><br>'+phzbutton ('', 'Login', this.prefix+'.pubkeyLoginForm ()','float:right')+'</td></tr>';    
     html += '<tr><td><a class=mediumA href=# onclick="'+this.prefix+'.join ()">Join Now</a></td></tr>';
     html += '</table></div>';
@@ -176,7 +174,7 @@ loginbox.prototype.sendPubkeyEnroll = async function (user, msg) {
     var post = 'enrolldevice=true&uname='+encodeURIComponent (user);
     var state = this;
     phzDialog.close ();
-    fetchPhzServer ("POST", url, function (r) {
+    fetchServer ("POST", url, function (r) {
 			if (r.resp >= 300) {
 			    if (r.resp == state.NOUSER) {
 				state.msg = "No such user "+user;
@@ -209,7 +207,7 @@ loginbox.prototype.sendPubkeyLogin = async function (uname, temppass) {
     post = await this.signURL (post, key);
     url = this.baseurl + url;
     var state = this;
-    fetchPhzServer ("POST", url, function (r, params, sts) {
+    fetchServer ("POST", url, function (r, params, sts) {
 	if (r.resp >= 300) {
 	    if (r.resp == state.UNENROLLED) {
 		state.removeCredential (state.credprefix, uname);	
@@ -242,7 +240,7 @@ loginbox.prototype.sendPubkeyJoin = async function (uname, email, webcrypto) {
     post = await this.signURL (post, key);
     url = this.baseurl + url;
     var state = this;
-    fetchPhzServer ("POST", url, function (r, params, sts) {
+    fetchServer ("POST", url, function (r, params, sts) {
 	if (r.resp >= 300) {
 	    phzAlert (null, "Can't join: "+r.comment);
 	    return;
@@ -346,10 +344,6 @@ loginbox.prototype.genKeyPair = async function (webcrypto) {
 	key.webCrypto = false;	
     }
     return key;
-};
-
-// to be deprecated 
-loginbox.prototype.pemToBinary = function (pem) {
 };
 
 loginbox.prototype.signURL = async function (url, key) {

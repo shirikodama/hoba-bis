@@ -18,7 +18,7 @@ require_once ("config.php");
 require_once ("../common/php/dbif.php");
 require_once ("../common/php/utils.php");
 require_once ("../common/php/sess.php");
-require_once ("../common/php/hobacmn.php");
+require_once ("hobacmn.php");
 
 if (($swdb = new dbif ()) == NULL) {
     swredirect ("dbdown", "index.php");

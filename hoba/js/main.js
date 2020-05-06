@@ -12,7 +12,7 @@
 function mainPage (prefix, opts) {
     this.prefix = prefix;
     this.opts = opts;
-    this.rightOff = 32;
+    this.rightOff = 2;
     this.topOff = 104;
     this.paneWidth = 300;
     this.settingpane = new htmlpane (this.prefix+'main', opts.main, 0, 0);
@@ -43,7 +43,7 @@ mainPage.prototype.display = function () {
     var newc = '';
     var cw = f_clientWidth ()-this.rightOff-this.paneWidth ;
     this.lb.pane.pos (cw, this.topOff);    
-    newc += '<div style="position:absolute; top:'+this.topOff+'px; right:'+this.rightOff+'px; border:2px solid gray; background:white">';
+    newc += '<div style="position:absolute; top:'+this.topOff+'px; right:'+this.rightOff+'px; width:320px; border:2px solid gray; background:white">';
     var menu = new topMenu ();
     if (this.loggedin) {
 	menu.item ("Profile", this.prefix+'.settings()', '', '', false);	
@@ -52,7 +52,7 @@ mainPage.prototype.display = function () {
 	menu.item ("Login", this.prefix+'.lb.login ()', '', '', false);
 	menu.item ("Join", this.prefix+'.lb.join ()', '', '', false);
     }
-    newc += '<img src='+this.opts.img+' width=320><br>'+this.opts.title||'';
+//    newc += '<img src='+this.opts.img+' width=320><br>'+this.opts.title||'';
     newc += menu.toHTML ();    
     newc += '</div>';
     var el = document.getElementById (this.opts.app);    

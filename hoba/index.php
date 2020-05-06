@@ -40,7 +40,7 @@ $jsl->addFile ("js/rsalib/asn1hex-1.1.js");
 $jsl->addFile ("js/rsalib/rsatopem.js");
 $jsl->addFile ("js/rsalib/securerandom.js");
 $jsl->addFile ("css/style.css");
-$jsl->addFile ("../common/js/loginbox.js");
+$jsl->addFile ("js/loginbox.js");
 $jsl->addFile ("js/main.js");
 $jsl->load ();
 
@@ -76,8 +76,9 @@ onloader (function () {
 <ul>
 <li>Use the login box on the right to log on and off the site, as well as join</li>
 <li>You can create any number of new accounts and log into any of them at any time; just use logout to switch between them</li>
+<li>Enrolling a new device happens when there is no key available for the current device, and you want to log into an existing account. What I usually do is have Chrome and Firefox open and Join in one of them, and then use the other browser to try to login too. Of course this works with say using your browser and your phone/tablet too.</li>
 <li>If it says that it can't use HOBA, make sure you are using a https: url, and use either chrome or firefox</li>
-<li>If you want to log in from a new device, just login as usual, and it will prompt to you get an OTP to enroll that device in your email</li>
+<li>If you want to log in from a new device, just login as usual, and it will prompt you get an OTP to enroll that device in your email</li>
 <li>This site does spectacularly little after logging in. This is a feature, not a bug</li>
 <li>If you want to clear all of your local keys click <a href="javascript:void(0)" onclick="st.main.clearCredentials ()">Clear</a></li>
 </ul>
@@ -91,8 +92,8 @@ onloader (function () {
 </ul>
 <h4>Following Along in the Code</h4>
 <ul>
-<li>You can view the code here at <a href="https://github.com/shirikodama/hoba-bis" target="_blank">HOBA-bis repo</a> if you want to follow along with what's going on with the demo</li>
-<li>Most of the action wrt HOBA in the code is happening in common/js/loginbox.js for signing, the main hoba module is common/php/hobacmn.php which is used by login.php for verifying and enrolling new keys and join.php for signing up. The HOBA specific parts of loginbox.js are what would need to be integrated with your own login UI. The HOBA specific parts of login.php and join.php would need to be integrated with your user database and authentication backend</li>
+<li>You can view the code here at <a href="https://github.com/shirikodama/hoba-bis" target="_blank">hoba-bis repo</a> if you want to follow along with what's going on with the demo</li>
+<li>Most of the action wrt HOBA in the code is happening in hoba/js/loginbox.js for signing, the main hoba module is hoba/hobacmn.php which is used by login.php for verifying and enrolling new keys and join.php for signing up. The HOBA specific parts of loginbox.js are what would need to be integrated with your own login UI. The HOBA specific parts of login.php and join.php would need to be integrated with your user database and authentication backend</li>
 <li>In this example email provides an out of band mechanism for the server to send an OTP to prove ownership of the account. SMS and other mechanisms can also be employed</li>
 <li>Like most things, most of this is UI. Don't let that deter you. I've tried to point out the juicy bits to show what is actually new and different in the code.</li>
 <li>If you complain that the backend is written in PHP, you will be obligated to write it in your own favorite language</li>
@@ -106,6 +107,9 @@ onloader (function () {
    <li>This code doesn't support email verification for join, but it would work the same as password based enroll</li>
    <li>I make an effort at dealing with edge cases, but this is a prototype so it's likely that I've missed some</li>
    <li>There is currently no way to delete a user. Stale credentials just get rejected for no such user when logging in</li>
+   <li>The credentials between classic rsa stuff and webCrypto don't interoperate for some reason. Since this is just a demo, it's nbd</li>
+   <li>The credentials are stored in localStorage. It's ongoing concern about whether that's ok or not. However  physical access to a device is highly problematic, so the main consideration is public devices</li>
+   <li>It might be worth showing the credential store being protected by a local password which never is transmitted. Or not. Security is hard and subtle</li>
    <li></li>
 </ul>    
 </p>

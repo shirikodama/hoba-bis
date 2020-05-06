@@ -1,7 +1,8 @@
 BODY {
   font-family: Verdana, Arial, Helvetica, sans-serif;
   font-size: 10pt;
-  background:#e9f7fa url(../imgs/davidmat10.png);
+  background:#eee; /* url(../imgs/davidmat10.png); */
+  
   margin:0px;
 }
 
@@ -133,7 +134,7 @@ div.dashBox {
 }
 
 div.paneBox, table.paneBox { 
-  background:#e9f7fa url(../imgs/davidmat7.png);
+    background:#e9f7fa; /* url(../imgs/davidmat7.png); */
   border:1px solid #4d7583;
   margin-bottom: 4px;
   border-bottom-right-radius:12px;
@@ -141,7 +142,7 @@ div.paneBox, table.paneBox {
 }
 
 div.roundedBox, table.roundedBox { 
-  background:#e9f7fa url(../imgs/davidmat10.png);
+    background:#e9f7fa; /* url(../imgs/davidmat10.png); */
   border:1px solid #74b0c6; 
   margin-bottom: 4px;
   border-radius:12px;
@@ -256,12 +257,12 @@ td.toproundbuttonfirst:visited, td.toproundbuttonlast:visited {
 }
 
 .phzbutton {
-      background:url(../imgs/OFF5.png); 
-      text-decoration: none; text-align:center; 
-      height:40px; width:80px; 
-      font-weight:bold; font-size:16px; 
-      color:#fff8e7; 
-      border-radius:6px;
+    background:url(../imgs/OFF5.png);
+    text-decoration: none; text-align:center; 
+    height:40px; width:80px; 
+    font-weight:bold; font-size:16px; 
+    color:#fff8e7; 
+    border-radius:6px;
 }
 
 
@@ -305,7 +306,7 @@ a.phzButton {
 }
 
 a.phzButton span {
-    background: transparent url('../imgs/phz_button_span7.png') no-repeat bottom left;
+    background: transparent url('../imgs/phz_button_span7.png') no-repeat bottom left; 
     color: white;
     display: block;
     line-height: 14px;

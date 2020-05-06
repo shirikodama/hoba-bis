@@ -13,17 +13,9 @@
 
 $siteurl = '//out.mtcc.com/hoba-bis/';
 $baseurl = '//out.mtcc.com/hoba-bis/hoba/';
-$sessname = "hoba-classic";
-$appName = 'Hoba Classic';
+$sessname = "hoba";
+$appName = 'Hoba Demo';
 $dbname = 'hoba.db';
-$dbhost = 'localhost';
-$dbuser = 'faux';
-$dbpasswd = 'fauxpass';
-$dbcharset = 'utf8';
 $mailhost = 'out.mtcc.com';
-$smtphost = 'localhost';
-$mailuser = 'mike@mtcc.com';
 $mailnoreply = 'no-reply@mtcc.com';
-$mailpass = NULL;
-$mailuseauth = false;
 ?>

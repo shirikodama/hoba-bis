@@ -12,7 +12,7 @@
 /* Edit History: 
  */
 
-function fetchServer (method, query, fn, param, post) {
+function _fetchServer (method, query, fn, param, post) {
     var req;
     req = new XMLHttpRequest(); // xmlHttp is now a XMLHttpRequest.
     req.onreadystatechange = function() {
@@ -32,20 +32,20 @@ function fetchServer (method, query, fn, param, post) {
     return req;
 }
 
-// Phresheez style server call with parsed standardized response header, and auth url handling
+// ajax server call with parsed standardized response header, and auth url handling
 
-function fetchPhzServer (method, query, fn, param, post) {
+function fetchServer (method, query, fn, param, post) {
     var nfn = function (resp, param, sts) {
-	var r = new phzResp (resp);
+	var r = new serverResp (resp);
 	fn (r, param, sts);
     };
-    var req = fetchServer (method, query, nfn, param, post);
+    var req = _fetchServer (method, query, nfn, param, post);
     return req;
 }
 
 // process the response code from a async call; return body
 
-function phzResp (resp) {
+function serverResp (resp) {
     this.resp = 402;
     this.comment = 'unexpected server error';
     this.body = '';
