@@ -44,8 +44,7 @@ onloader (function () {
 	<figcaption>The Hoba Meteorite in Namibia</figcaption>
      </figure>
      <h3>Passwords Suck Like Getting Mashed By This Thing!</h3>
-     <a href="hoba-bis" class="phzButton"><span>HOBA Using WebCrypto</span></a>
-     <a href="hoba" class="phzButton"><span>Classic JS HOBA</span></a>
+     <a href="hoba" class="phzButton"><span>Run HOBA Demo</span></a>
      <a href="https://github.com/shirikodama/hoba-bis" target="_blank" class="phzButton"><span>View Source</span></a>     
 </div>
 <div class="textbox newA">
@@ -67,7 +66,7 @@ So why pick this back up after 8 years? Two things: WebAuthn and WebCrypto. I wa
 Fortunately something else happened in the mean time: <a target="_blank" href="https://www.w3.org/TR/WebCryptoAPI/">WebCrypto</a>. WebCrypto gives all of the tools that I was lacking with my javascript crypto libraries. It's pretty safe to assume that they are just putting on a browser API veneer to existing crypto libraries used by browsers. Given WebAuthn's complexity and WebCrypto's availability, it seemed reasonable to revisit HOBA again by implementing a new WebCrypto based version. So this site was born.
 </p>
 <p>
-You can visit the my original blog post about what would become HOBA <a target="_blank" href="https://rip-van-webble.blogspot.com/2012/06/using-asymmetric-keys-for-web-joinlogin.html">here</a>. My post implentation experience <a target="_blank" href="https://rip-van-webble.blogspot.com/2012/07/asymmetric-keying-after-implementation.html">here</a> and for giggles my attempt to rationalize some stuff <a target="_blank" href="https://rip-van-webble.blogspot.com/2012/06/localstorage-secuity.html">here</a>.
+You can visit the my original blog post about what would become HOBA <a target="_blank" href="https://rip-van-webble.blogspot.com/2012/06/using-asymmetric-keys-for-web-joinlogin.html">here</a>. My post implentation experience <a target="_blank" href="https://rip-van-webble.blogspot.com/2012/07/asymmetric-keying-after-implementation.html">here</a> and for my attempt to rationalize using localStorage <a target="_blank" href="https://rip-van-webble.blogspot.com/2012/06/localstorage-secuity.html">here</a>.
 Best of all there is a <a target="_blank" href="https://github.com/shirikodama/hoba-bis" target="_blank">Github Project</a> you can clone to puruse the code. I tried to chop this down to be just demonstrate the general problem and my solutions for various (re)enrollment scenarios.
 </p>
 <p>

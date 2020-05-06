@@ -44,6 +44,16 @@ function html_slashify ($s) {
     return str_replace ('"', '&quot;', $s);
 }
 
+function valid ($params) {
+    global $opts;
+
+    foreach ($params as $p)
+	if (! isset ($opts [$p]) || $opts [$p] === "")
+	    return $p;
+    return NULL;
+}
+
+
 
 function goodpass ($u, $pwd) {
     if (strlen ($pwd) >= 6 && $pwd != $u->uname)

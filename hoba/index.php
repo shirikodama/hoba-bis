@@ -32,6 +32,7 @@ $jsl->addFile ("js/rsalib/jsbn2.js");
 $jsl->addFile ("js/rsalib/rsa.js");
 $jsl->addFile ("js/rsalib/rsa2.js");
 $jsl->addFile ("js/rsalib/sha1.js");
+$jsl->addFile ("js/rsalib/sha256.js");
 $jsl->addFile ("js/rsalib/base64.js");
 $jsl->addFile ("js/rsalib/rsapem-1.1.js");
 $jsl->addFile ("js/rsalib/rsasign-1.2.js");

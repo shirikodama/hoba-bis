@@ -46,7 +46,7 @@ mainPage.prototype.display = function () {
     newc += '<div style="position:absolute; top:'+this.topOff+'px; right:'+this.rightOff+'px; border:2px solid gray; background:white">';
     var menu = new topMenu ();
     if (this.loggedin) {
-	menu.item ("Settings", this.prefix+'.settings()', '', '', false);	
+	menu.item ("Profile", this.prefix+'.settings()', '', '', false);	
 	menu.item ("Logout", this.prefix+'.logout()', '', '', false);
     } else {
 	menu.item ("Login", this.prefix+'.lb.login ()', '', '', false);
@@ -61,8 +61,23 @@ mainPage.prototype.display = function () {
 
 mainPage.prototype.settings = function () {
     var html = '';
-    html += this.settingpane.title ("Settings", this.prefix+".settingpane.display(0);");
-    html += '<h3>Update '+this.opts.user+'</h3>';
+    html += this.settingpane.title ("Profile", this.prefix+".settingpane.display(0);");
+    var cred = this.lb.getCredential (this.opts.user);    
+    var credtype = cred.webCrypto ? "webCrypto" : "classic js rsa";
+    html += '<div style="padding:5px">';
+    html += '<h4>User '+this.opts.user+' using '+credtype+' keys</h4>';
+    html += '<h4>All Credentials</h4>';
+    var creds = this.lb.getCredentials ();    
+    var ncreds = 0;
+    var credstr = '';
+    var prefix = this.lb.credprefix;
+    for (var i in creds) {
+	var cred = creds[i];
+	credstr += cred.uname+' '+(cred.webCrypto ? 'webCrypto' : 'js RSA')+'<br>';
+	ncreds++;
+    }
+    if (ncreds)	html += credstr.substr (0, credstr.length-4);
+    html += '</div>';
     this.settingpane.reliableNewc (html);
     var cw = f_clientWidth ()/2-this.paneWidth/2;
     this.settingpane.pos (cw, this.topOff);        

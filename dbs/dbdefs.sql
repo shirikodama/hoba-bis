@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS `userpubkeys`;
 CREATE TABLE `userpubkeys` (
   `uid` integer,
   `pubkey` text,
-  `credate` integer DEFAULT NULL,
+  `credate` integer DEFAULT NULL
 );
 DROP TABLE IF EXISTS `users`;
 

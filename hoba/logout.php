@@ -2,7 +2,7 @@
 /*
  *	       Copyright (c) Mar 22 13:33:35  MTCC
  *	Author: Michael Thomas
- *	Module: logout.php<4>
+ *	Module: logout.php
  *	Created: Fri Mar 22 13:33:35 2013
  *	Abstract:
  *      License: http://www.gnu.org/licenses/gpl-2.0.html	   	   	   	   

@@ -24,39 +24,25 @@ if (($swdb = new dbif ()) == NULL) {
     swredirect ("dbdown", "index.php");
 }
 
-function valid ($params) {
-    global $opts;
-
-    foreach ($params as $p)
-	if (! isset ($opts [$p]) || $opts [$p] === "")
-	    return $p;
-    return NULL;
-}
-
-function unameok ($name) {
-    // obviously needs bogosity detectors... 
-    return true;
-}
-
 if (@$opts ['mode'] == 'test') {
     if (($u = $swdb->fetchuser ($opts ['uname'])) == NULL) {
         sendResp (NOUSER, "no such user");        
     }
 }
 
-$badto = NULL;
-$params = array ('uname', 'email', 'pubkey', 'signature');
+$params = ['uname', 'email', 'pubkey', 'signature'];
 if (($p = valid ($params))) {
-    sendResp (BADREQUEST, "missing$p", $badto);
+    print_r($params, true);
+//    sendResp (BADREQUEST, "missing required param: $p", NULL);    
 }
 
 $opts ['user'] = "";
-if (! gooduser ($opts ['uname']) || unameok ($opts ['uname']) == 0) {
-    sendResp (BADUSER, "Illegal user name", $badto);
+if (! gooduser ($opts ['uname'])) {
+    sendResp (BADUSER, "Illegal user name", NULL);
 }
 
 if (! goodemail ($opts ['email'])) {
-    sendResp (BADEMAIL, "Email Address doesn't exist or is not formatted correctly", $badto);
+    sendResp (BADEMAIL, "Email Address doesn't exist or is not formatted correctly", NULL);
 }
 $opts ['email'] = fixemail ($opts ['email']);
 
@@ -84,9 +70,8 @@ hobaChecks ($opts);
 if ($rejoin) {
     $_SESSION ['uname'] = $opts ['uname'];
     $_SESSION ['lastaccess'] = time ();
-    sendResp (OK, "You've already joined, but you're now logged in", NULL);
     $swdb->updAccess ($u->uid);
-    exit (0);
+    sendResp (OK, "You've already joined, but you're now logged in", NULL);
 }
 
 // all is cool, log them in

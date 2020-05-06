@@ -32,28 +32,6 @@ function onloader (lfn) {
     }
 }
 
-function expobackoff (max, inc) {
-    this.max = max;
-    if (inc)
-	this.inc = inc;
-    else
-	this.inc = 1000;
-    this.cur = this.inc;
-}
-
-expobackoff.prototype.reset = function () {
-    this.cur = this.inc;
-};
-
-expobackoff.prototype.offset = function () {
-    var cur = this.cur;
-    if (this.cur+this.inc <= this.max)
-	this.cur += this.inc;
-    return cur;
-};
-
-
-
 function datefmt (date) {
     if (! typeof (date) == 'number' || ! date)
 	return date;
@@ -130,7 +108,6 @@ function f_scrollTop() {
 	);
 }
 function f_filterResults(n_win, n_docel, n_body, full) {
-    //debugmsg ("w=%d de=%d b=%d\n", n_win, n_docel, n_body);
 	var n_result = n_win ? n_win : 0;
 	if (n_docel && (!n_result || (n_result > n_docel)))
 		n_result = n_docel;
@@ -145,60 +122,6 @@ function f_filterResults(n_win, n_docel, n_body, full) {
 	return n_body && (!n_result || (n_result > n_body)) ? n_body : n_result;
 }
 
-
-function dump(arr,level, max) {
-    var dumped_text = "";
-    var level_padding = level;
-    var maxarr;
-    if (level == 0)
-	maxarr = 500;
-    else
-	maxarr = 20;
-    for(var j=0;j<level+1;j++) level_padding += "....";
-    if (level > max)
-	return "<br>"+level_padding+"[depth>"+max+"...]<br>";
-    if(typeof(arr) == 'object') { //Array/Hashes/Objects
-	var item, n = 0;
-	dumped_text += "<br>";
-	for(item in arr) {
-	    try {
-		var value = arr[item];
-	    } catch (c) {
-		dumped_text += sprintf ("%s error accessing '%s'\n", level_padding, item);	
-		continue;
-	    }
-	    if (n++ > maxarr)
-		break;
-	    if(typeof(value) == 'object') { //If it is an array,
-		dumped_text += level_padding + "'" + item + "' ";
-		dumped_text += dump(value,level+1, max);		
-	    } else {
-		dumped_text += level_padding + "'" + item + "' => \"" + value + "\"<br>";
-	    }
-	}
-	if (n > maxarr)
-	    dumped_text += level_padding + sprintf ("[array>%d]<br>", n);
-    } else { //Stings/Chars/Numbers etc.
-	dumped_text = "===>"+arr+"<===("+typeof(arr)+")";
-    }
-    return dumped_text;
-} 
-
-function var_dump(obj, max) {
-    var rv;
-    if (arguments.length < 2)
-	var max = 4;
-    debugwrt (sprintf ("obj=%s<br>", obj));
-    rv = dump (obj, 0, max);
-    debugwrt (rv+"<br>");
-    return rv;
-}
-
-function sprintf () {
-    return vsprintf (arguments);
-}
-
-
 /**
 *
 *  Javascript sprintf
@@ -206,6 +129,10 @@ function sprintf () {
 *
 *
 **/
+
+function sprintf () {
+    return vsprintf (arguments);
+}
 
 var __vsprintfexp = /(%([%]|(\-)?(\+|\x20)?(0)?(\d+)?(\.(\d)?)?([bcdfosxX])))/g;
         
@@ -328,38 +255,6 @@ function __convert (match, nosign){
     }
 }
 
-function objCloneProto (obj, base) {
-    var i;
-    for (i in base.prototype) {
-	obj [i] = base.prototype [i];
-    }
-}
-
-function plural (n, str) {
-    if (Math.floor (n) == 1)
-	return str;
-    return str+"s";
-}
-
-function infstr (n, max) {
-    if (n >= max)
-	return '&#8734;';
-    else
-	return n;
-}	
-
-
-String.prototype.abbrev = function (max) {
-    if (this.length > max)
-	return this.substr (0, max-1)+'$';
-    else
-	return this;
-};
-
-function jqid (id) {
-    return '#'+id.replace (/\./g, '\\.');
-};
-
 
 
 
@@ -368,55 +263,77 @@ String.prototype.trim = function () {
 };
 
 
-
-
-function extend (subclass, superclass) {
-    var f = function() {};
-    f.prototype = superclass.prototype;
-    subclass.prototype = new f();
-    subclass.prototype.constructor = subclass;
-    subclass.superclass = superclass.prototype;
-    if (superclass.prototype.constructor == Object.prototype.constructor) {
-        superclass.prototype.constructor = superclass;
-    }
-};
-
-
-function argsToString () {
-    var i;
-    var rv = '(';
-    for (i = 0; i < arguments.length; i++) {
-	if (typeof arguments [i] == 'string') {
-	    rv += "'"+slashify(arguments [i])+"'";
-	} else
-	    rv += arguments [i];
-	rv += ',';
-    }
-    if (arguments.length)
-	rv = rv.substr (0, rv.length-1);
-    rv += ')';
-    return rv;
+function ab2str(buf) {
+    return String.fromCharCode.apply(null, new Uint8Array(buf));
 }
 
-function loadJS (url, onload) {
-    var headID = document.getElementsByTagName("head")[0];         
-    var newScript = document.createElement('script');
-    newScript.type = 'text/javascript';
-    newScript.onload=onload;
-    newScript.src = url;
-    headID.appendChild(newScript);
-    return newScript;
+function str2ab(str) {	
+    const buf = new ArrayBuffer(str.length);
+    const bufView = new Uint8Array(buf);
+    for (let i = 0, strLen = str.length; i < strLen; i++) {
+	bufView[i] = str.charCodeAt(i);
+    }
+    return buf;
 }
 
 
-function isWidget () {
-    try {
-	if (parseInt (opts.widget))
-	    return true;
-	else
-	    return false;
-    } catch (e) {
-	return false;
+function textToArrayBuffer(str) {
+    var buf = unescape(encodeURIComponent(str)) // 2 bytes for each char
+    var bufView = new Uint8Array(buf.length)
+    for (var i=0; i < buf.length; i++) {
+	bufView[i] = buf.charCodeAt(i)
     }
+    return bufView
 }
+
+function convertPemToBinary(pem) {
+    var lines = pem.split('\n')
+    var encoded = ''
+    for(var i = 0;i < lines.length;i++){
+	if (lines[i].trim().length > 0 &&
+	    lines[i].indexOf('-BEGIN RSA PRIVATE KEY-') < 0 &&
+	    lines[i].indexOf('-BEGIN RSA PUBLIC KEY-') < 0 &&
+	    lines[i].indexOf('-END RSA PRIVATE KEY-') < 0 &&
+	    lines[i].indexOf('-END RSA PUBLIC KEY-') < 0) {
+	    encoded += lines[i].trim()
+	}
+    }
+    return base64StringToArrayBuffer(encoded)
+}
+
+function base64StringToArrayBuffer(b64str) {
+    var byteStr = atob(b64str)
+    var bytes = new Uint8Array(byteStr.length)
+    for (var i = 0; i < byteStr.length; i++) {
+	bytes[i] = byteStr.charCodeAt(i)
+    }
+    return bytes.buffer
+}
+
+function arrayBufferToBase64String(arrayBuffer) {
+    var byteArray = new Uint8Array(arrayBuffer)
+    var byteString = ''
+    for (var i=0; i<byteArray.byteLength; i++) {
+	byteString += String.fromCharCode(byteArray[i])
+    }
+    return btoa(byteString)
+}
+
+function convertBinaryToPem(binaryData, label) {
+    var base64Cert = arrayBufferToBase64String(binaryData)
+    var pemCert = "-----BEGIN " + label + "-----\r\n"
+    var nextIndex = 0
+    var lineLength
+    while (nextIndex < base64Cert.length) {
+	if (nextIndex + 64 <= base64Cert.length) {
+	    pemCert += base64Cert.substr(nextIndex, 64) + "\r\n"
+	} else {
+	    pemCert += base64Cert.substr(nextIndex) + "\r\n"
+	}
+	nextIndex += 64
+    }
+    pemCert += "-----END " + label + "-----\r\n"
+    return pemCert
+}
+
 

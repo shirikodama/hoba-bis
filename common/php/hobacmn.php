@@ -53,7 +53,11 @@ function hobaChecks ($opts) {
     if ($swdb->fetchUserPubkeyReplayCache ($opts ['signature'])) {
         sendResp (SIGERROR, "replay detected", NULL);
     }
-    if (! openssl_verify ($body, base64_decode ($opts ['signature']), $pkeyid)) {
+    if (@$opts['hash']) {
+        $hash = $opts['hash'];
+    } else
+        $hash = OPENSSL_ALGO_SHA256;
+    if (! openssl_verify ($body, base64_decode ($opts ['signature']), $pkeyid, $hash)) {
         sendResp (SIGERROR, "bad signature", NULL);
     }
     $swdb->appendUserPubkeyReplayCache ($opts ['signature'], $opts ['curtime'], time ()+3600);
@@ -82,6 +86,8 @@ function hobaLoginChecks ($u, $opts) {
             sendResp (SIGERROR, "OTP expired", NULL);
     } else {
         if (! $pubkey) {
+            // run the other checks to make certain that the key is legit and just unenrolled
+            hobaChecks ($opts);
             sendResp (UNENROLLED, "Unenrolled key", NULL);
         }
     }

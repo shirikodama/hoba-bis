@@ -24,6 +24,12 @@ function setlogin ($u) {
     $swdb->updAccess ($u->uid);
 }
 
+$params = ['uname'];
+if (($p = valid ($params))) {
+    print_r($params, true);
+    sendResp (BADREQUEST, "missing required param: $p", NULL);
+}
+
 
 if (($swdb = new dbif ()) == NULL) {
     sendResp (DBDOWN, "dbdown", NULL);

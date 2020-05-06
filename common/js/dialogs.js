@@ -40,19 +40,16 @@ function phzDialog (fn, msg, buttons) {
 
 function phzAlert (fn, msg, title, size, buttontxt) {
     if (! size)
-	size = { w:200, h:160 };
+	size = { w:250, h:200 };
     if (! phzDialog.pane) {
 	phzDialog.pane = new htmlpane ('phzdialog', 'dialogcontainer', 0, 0);
-	phzDialog.pane.size (size.w, size.h);	
 	phzDialog.pane.z (1000);
     }
     phzDialog.fn = fn;
     var newc = '';
-    if (title != '') {
-	if (! title)
-	    title = "Alert";
-	newc += '<div class=htmlpaneTitle>'+title+'</div>';
-    } 
+    if (! title)
+	title = "Alert";
+    newc += '<div class=htmlpaneTitle>'+title+'</div>';
     if (! buttontxt)
 	buttontxt = "Ok";
     var x = f_scrollLeft () + (f_clientWidth()-size.w)/2;
@@ -72,6 +69,11 @@ function phzAlert (fn, msg, title, size, buttontxt) {
     phzDialog.pane.size (size.w, size.h);	    
 }
 
+phzDialog.close = function () {
+    if (phzDialog.pane)
+	phzDialog.pane.display (0);
+}
+
 
 phzDialog.confirm = function (answer) {
     phzDialog.pane.display (0);
@@ -80,27 +82,9 @@ phzDialog.confirm = function (answer) {
 };
 
 function phzInfo (title, msg) {
-    var size = { w:200, h:160 };
-    if (! phzInfo.pane) {
-	phzInfo.pane = new htmlpane ('phzinfo', 'infocontainer', 0, 0);
-	phzInfo.pane.size (size.w, size.h);
-	phzInfo.pane.setStackable (true);
-    }
-    var x = f_scrollLeft () + (f_clientWidth()-size.w)/2;
-    var y = f_scrollTop () + (f_clientHeight()-size.h)/2;
-    if (x < 0)
-	x = 0;
-    if (y < 0)
-	y = 0;
-    phzInfo.pane.pos (x, y);    
-    var newc = '';
-    newc += phzInfo.pane.title (title, "phzInfo.pane.display(0)");
-    newc += '<p align=center><b>'+msg+'</b></p>';
-    window.scroll(0, 0);
-    phzInfo.pane.reliableNewc (newc);
-    phzInfo.pane.display (1);
+    phzAlert (null, msg, title);
     setTimeout (function () {
-	phzInfo.pane.display (0);
+	phzDialog.pane.display (0);
     }, 1500);
 }
 
