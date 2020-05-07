@@ -18,7 +18,10 @@ CREATE TABLE `users` (
   `fullname` varchar(64) DEFAULT NULL,
   `email` varchar(64) DEFAULT NULL,
   `lastaccess` integer DEFAULT NULL,
+  `lastaccessip` varchar(40) DEFAULT NULL,  
   `joindate` char(8) DEFAULT NULL,
   `temppass` varchar(16) DEFAULT NULL,
-  `temppasstmo` integer DEFAULT NULL
+  `temppasstmo` integer DEFAULT NULL,
+  `hobanonce` varchar(16) DEFAULT NULL,
+  `hobanoncetmo` integer DEFAULT NULL    
 );

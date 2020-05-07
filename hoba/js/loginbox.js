@@ -41,15 +41,19 @@ function loginbox (prefix, appname, baseurls, containers) {
     this.credprefix = appname;
     this.onLoggedIn = null;
     this.OK = 200;
+    this.NONCEREPLY = 202;    
+    
     this.DBDOWN = 400;
+    this.UNENROLLED = 401;
+    this.NOUSER = 404;
+    this.SIGERROR = 406;
+    this.TEMPPASSEXPIRED = 408;
+    this.TEMPPASSWRONG = 410;    
+
     this.SERVERERROR = 500;
     this.BADREQUEST = 501;
-    this.SIGERROR = 502;
-    this.UNENROLLED = 503;
-    this.NOUSER = 505;
     this.BADUSER = 506;
     this.BADEMAIL = 507;
-    this.USERTAKEN = 508;    
 }
 
 loginbox.prototype.login = function () {
@@ -204,15 +208,21 @@ loginbox.prototype.sendPubkeyLogin = async function (uname, temppass) {
     if (temppass) {
 	post += '&temppass='+encodeURIComponent (temppass);
     }
-    post = await this.signURL (post, key);
+    post = await this.signURL (post, key, 'login');
     url = this.baseurl + url;
     var state = this;
     fetchServer ("POST", url, function (r, params, sts) {
-	if (r.resp >= 300) {
+	if (r.resp >= 300) {	    
 	    if (r.resp == state.UNENROLLED) {
 		state.removeCredential (state.credprefix, uname);	
 		state.sendPubkeyEnroll (uname, '');
-	    } else
+	    } else if (r.resp == state.TEMPPASSWRONG) {
+		phzAlert (null, 'Your OTP is incorrect');
+		return;
+	    } else if (r.resp == state.TEMPPASSEXPIRED) {
+		state.sendPubkeyEnroll (uname, 'Your OTP has expired; a new one will be sent to you');		
+		return;
+	    } else		
 		phzAlert (null, "Can't login: "+r.comment);
 	    return;
 	}
@@ -230,14 +240,16 @@ loginbox.prototype.sendPubkeyLogin = async function (uname, temppass) {
 };
 
 
-loginbox.prototype.sendPubkeyJoin = async function (uname, email, webcrypto) {    
-    var key = await this.genKeyPair (webcrypto);
+loginbox.prototype.sendPubkeyJoin = async function (uname, email, webcrypto) {
+    var key = this.getCredential (uname);
+    if (! key)
+	var key = await this.genKeyPair (webcrypto);
     var url = 'join.php';
     var post = sprintf ("uname=%s&email=%s&app=%s",
 		       encodeURIComponent (uname), encodeURIComponent (email),
 			encodeURIComponent (this.appname));
     phzDialog.close ();    
-    post = await this.signURL (post, key);
+    post = await this.signURL (post, key, 'join');
     url = this.baseurl + url;
     var state = this;
     fetchServer ("POST", url, function (r, params, sts) {
@@ -346,7 +358,7 @@ loginbox.prototype.genKeyPair = async function (webcrypto) {
     return key;
 };
 
-loginbox.prototype.signURL = async function (url, key) {
+loginbox.prototype.signURL = async function (url, key, from) {
     var sig;
     var hash = this.alg.hash.classicname;
     if (key.webCrypto) {
@@ -368,10 +380,10 @@ loginbox.prototype.signURL = async function (url, key) {
     url += '&curtime='+ new Date ().getTime ()/1000;
     url += '&hash='+ hash;
     if (key.webCrypto) {
-	sig = await this.subtle.sign(this.alg, key.keypair.privateKey, textToArrayBuffer(url));
+	sig = await this.subtle.sign(this.alg, key.keypair.privateKey, textToArrayBuffer(from+url));
 	sig = btoa (ab2str(sig));
     } else {
-	sig = hex2b64 (rsa.signString(url, hash));
+	sig = hex2b64 (rsa.signString(from+url, hash));
     }
     url += '&signature=' + encodeURIComponent (sig);
     return url;

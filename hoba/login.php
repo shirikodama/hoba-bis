@@ -21,12 +21,12 @@ require_once ("hobacmn.php");
 function setlogin ($u) {
     global $opts, $logincookiehost, $swdb, $sessname;
     setcookie ("${sessname}login", "$u->uname|", time ()-3600, "/", $logincookiehost);
-    $swdb->updAccess ($u->uid);
+    $swdb->updAccess ($u->uid, $_SERVER['REMOTE_ADDR']);
 }
 
 $params = ['uname'];
 if (($p = valid ($params))) {
-    print_r($params, true);
+    error_log (print_r($opts, true));
     sendResp (BADREQUEST, "missing required param: $p", NULL);
 }
 
@@ -42,7 +42,7 @@ if (($u = $swdb->fetchUser ($opts ['uname'])) == NULL) {
 // login specific checks
 hobaLoginChecks ($u, $opts);
 // check out that the signature verfies, etc
-hobaChecks ($opts);
+hobaChecks ($opts, 'login');
 // finish up logging in
 hobaFinishLogin ($u, $opts);
 

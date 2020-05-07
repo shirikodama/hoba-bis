@@ -32,8 +32,8 @@ if (@$opts ['mode'] == 'test') {
 
 $params = ['uname', 'email', 'pubkey', 'signature'];
 if (($p = valid ($params))) {
-    print_r($params, true);
-//    sendResp (BADREQUEST, "missing required param: $p", NULL);    
+    error_log (print_r($params, true));
+    sendResp (BADREQUEST, "missing required param: $p", NULL);    
 }
 
 $opts ['user'] = "";
@@ -55,22 +55,21 @@ $newuser->joindate = strftime ("%Y%m%d");
 // check to see if they are joining with the same user and pubkey... an edge case to be sure.
 $rejoin = false;
 if ($u = $swdb->fetchuser ($opts ['uname'])) {
-    $pubkey = $swdb->fetchUserPubkey ($u->uid, $opts['pubkey']);    
+    $pubkey = $swdb->fetchUserPubkey ($u->uid, $opts['pubkey']);                
     if (! $pubkey) {
-        // this is a special case for initial bonding of the admin account to the first to login as it
-        if ($opts ['uname'] != 'root') {
-            sendResp (USERTAKEN, "User name ${opts['uname']} taken", NULL);
-        }
+        sendResp (USERTAKEN, "User name ${opts['uname']} taken", NULL);
+    } else {
+        $rejoin = true;
     }
 }
 
 // this will send an error code and die if bad request
-hobaChecks ($opts);
+hobaChecks ($opts, 'join');
 
 if ($rejoin) {
     $_SESSION ['uname'] = $opts ['uname'];
     $_SESSION ['lastaccess'] = time ();
-    $swdb->updAccess ($u->uid);
+    $swdb->updAccess ($u->uid, $_SERVER['REMOTE_ADDR']);
     sendResp (OK, "You've already joined, but you're now logged in", NULL);
 }
 
@@ -83,6 +82,7 @@ $_SESSION ['lastaccess'] = time ();
 
 // finish up the join process 
 hobaFinishJoin ($u, $opts);
+$swdb->updAccess ($u->uid, $_SERVER['REMOTE_ADDR']);
 
 sendResp (OK, "Welcome aboard $u->uname", "");
 

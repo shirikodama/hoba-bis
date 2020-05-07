@@ -30,20 +30,6 @@ if (isset ($opts ['session'])) {
 
 // this is a hack having this here, but oh well.
 
-function checkAdminAcct () {
-    global $swdb, $appName;
-    if ($swdb->fetchUser ('root') == NULL) {
-	$newuser = new stdClass ();
-	$newuser->uname = 'root';
-	$newuser->fullname = 'Admin Role Account';
-	$newuser->email = '';
-	$newuser->joindate = strftime ("%Y%m%d");
-	$newuser->lastaccess = 0;
-	$newuser->epass = NULL;
-	$swdb->updUser ($newuser);
-    }
-}
-
 $opts ['user'] = "";	// always inherit this from $_SESSION
 
 define ('SESSTMO', 0);
@@ -54,7 +40,6 @@ function _setuser ($anonok, $require = NULL, $asSts = 0, $doupdate = true) {
         session_destroy ();	
         die ("400 database down\n");	
     }
-    checkAdminAcct ();	    
     if (! isset ($_SESSION ['uname'])) {
         if ($anonok) {
             $u = NULL;	    

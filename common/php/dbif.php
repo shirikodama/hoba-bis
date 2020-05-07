@@ -98,12 +98,13 @@ class dbif {
         return 1;
     }
 
-    function updAccess ($uid) {
-        $this->curq = "UPDATE users set lastaccess=? where uid=?";
+    function updAccess ($uid, $ipaddr) {
+        $this->curq = "UPDATE users set lastaccess=?,lastaccessip=? where uid=?";
         $q = $this->prepare ($this->curq);	
         $t = time ();
         $q->bindParam (1, $t);
-        $q->bindParam (2, $uid);
+        $q->bindParam (2, $ipaddr);
+        $q->bindParam (3, $uid);
         $this->exec ($q);
         return 1;
     }
@@ -153,6 +154,17 @@ class dbif {
         $q = $this->prepare ($this->curq);
         $q->bindParam (1, $temppass);
         $q->bindParam (2, $temppasstmo);
+        $q->bindParam (3, $uid);
+        if ($this->exec ($q) == false)
+            return false;	
+        return true;
+    }
+
+    function setUserNonce ($uid, $nonce, $noncetmo) {
+        $this->curq = 'update users set hobanonce=?, hobanoncetmo=? where uid=?';
+        $q = $this->prepare ($this->curq);
+        $q->bindParam (1, $nonce);
+        $q->bindParam (2, $noncetmo);
         $q->bindParam (3, $uid);
         if ($this->exec ($q) == false)
             return false;	

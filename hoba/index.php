@@ -74,8 +74,8 @@ onloader (function () {
 <p>
 <h4>Using the Demo</h4>
 <ul>
-<li>Use the login box on the right to log on and off the site, as well as join</li>
-<li>You can create any number of new accounts and log into any of them at any time; just use logout to switch between them</li>
+    <li>Use the login box on the right to log on and off the site, as well as join. Once you login/join you can logout. That's pretty much it. If you're expecting something more exciting, you are missing the point that not putting a secret onto a wire is pretty exciting.</li>
+    <li>You can create any number of new accounts and log into any of them at any time; just use logout to switch between them</li>
 <li>Enrolling a new device happens when there is no key available for the current device, and you want to log into an existing account. What I usually do is have Chrome and Firefox open and Join in one of them, and then use the other browser to try to login too. Of course this works with say using your browser and your phone/tablet too.</li>
 <li>If it says that it can't use HOBA, make sure you are using a https: url, and use either chrome or firefox</li>
 <li>If you want to log in from a new device, just login as usual, and it will prompt you get an OTP to enroll that device in your email</li>
@@ -86,8 +86,8 @@ onloader (function () {
 <h4>How HOBA works</h4>
 <ul>
 <li><b>Login Flow</b> Get the user name and fetch the key pair from the credential store. Generate the URL and sign the URL. Client sends the login request to login.php. Server verifies the signature and responds with an HTTP style response code</li>
-<li><b>Initial Join Flow</b> Get the user name and email. Generate a new key pair and store the key pair for this user. Generate the URL. Sign the URL and send to join.php. Server verifies the signature, and fails if it doesn't verify. Server then checks to see if user name is available, and if available creates a new user and stores the public key in a table of userid/publickey touples. Server then responds with a HTTP style response code</li>
-<li><b>Enroll New Device Flow</b> Get the user name and find that it doesn't have a credential. Generate a new key pair and store it for the user. Generate the URL with the new public key to be enrolled. Sign the URL and send to login.php (from the user's standpoint they are just logging in). Server verifies the signature, and fails if it doesn't verify. Server emails an OTP to the user. User gets email and enters OTP on the client. Client then sends a new login request with the OTP and public key to login.php. Server verifies the signature and the OTP and stores the new public key in a table of userid/publickey touples. Server then responds with a HTTP style response code</li>
+<li><b>Initial Join Flow</b> Get the user name and email. Generate a new key pair and store the key pair for this user. Generate the URL. Sign the URL and send to join.php. Server verifies the signature, and fails if it doesn't verify. Server then checks to see if user name is available, and if available creates a new user and stores the public key in a table of userid/publickey tuples. Server then responds with a HTTP style response code</li>
+<li><b>Enroll New Device Flow</b> Get the user name and find that it doesn't have a credential. Generate a new key pair and store it for the user. Generate the URL with the new public key to be enrolled. Sign the URL and send to login.php (from the user's standpoint they are just logging in). Server verifies the signature, and fails if it doesn't verify. Server emails an OTP to the user. User gets email and enters OTP on the client. Client then sends a new login request with the OTP and public key to login.php. Server verifies the signature and the OTP and stores the new public key in a table of userid/publickey tuples. Server then responds with a HTTP style response code</li>
 <li>Logout has nothing to do with HOBA per se... it just kills off the session cookie as usual</li>
 </ul>
 <h4>Following Along in the Code</h4>
@@ -103,15 +103,15 @@ onloader (function () {
 <p>
 <h4>TODO</h4>
 <ul>
-   <li>It's an open question whether time based freshness is ok. The flows can always be rewritten to use a nonce-based challenge for replays</li>
+   <li>It's an open question whether time based freshness is ok. The flows can always be rewritten to use a nonce-based challenge for replays; I should probably implement both to weigh the pros and cons</li>
    <li>This code doesn't support email verification for join, but it would work the same as password based enroll</li>
    <li>I make an effort at dealing with edge cases, but this is a prototype so it's likely that I've missed some</li>
    <li>There is currently no way to delete a user. Stale credentials just get rejected for no such user when logging in</li>
    <li>The credentials between classic rsa stuff and webCrypto don't interoperate for some reason. Since this is just a demo, it's nbd</li>
    <li>The credentials are stored in localStorage. It's ongoing concern about whether that's ok or not. However  physical access to a device is highly problematic, so the main consideration is public devices</li>
    <li>It might be worth showing the credential store being protected by a local password which never is transmitted. Or not. Security is hard and subtle</li>
-   <li></li>
-</ul>    
+<li></li>
+                                                                                                                                                                                                                                                                                                         </ul>    
 </p>
 
 <div id="mainpage"></div>
