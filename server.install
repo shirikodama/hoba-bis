@@ -1,56 +1,15 @@
-0) load all of the packages onto an initial VM which can then be
-   cloned for the rest of your VM's.
-   o create a new vm with the ubuntu-12.04-server.iso image
-   o set the network interface to "bridged"
-   o set the disk size to about 5-6 gig
-   o set memory to about 512M
-   o now start the create process
-0.5) apt-get update
-    apt-get install apt-file
-1) sqlite3
-2) get php7, php7-curl, php7-mysql, php7-gmp, php-pear, php7-sqlite
-   then:  service apache2 restart
-9) git clone...
-10) on database carrying machines:)
-   on the first clone vm, as root:
-   on each of the base testbed machines (on mtcc.com):
-   for each database (fakesys, fakesco, fakinks):
-       cd ~/faux/configs/[host]/       
-       go to the base machine and do a mysqldump - d > dbdefs.sql
-       svn commit faux
-   for each database on the new testbed:
-       cd ~/faux/configs/[host]/
-       svn update
-       mysql [db] < dbdefs.sql
-       mysql [db] < dbgrant.sql
-11) /var/www
-     ln -s ~/faux/common /var/www/common
-     ln -s ~/faux/[current name] /var/www/site
-     ln -s ~/faux/common/php/index.php index.php      
-     rm /var/www/index.html
-     ln -s ~faux/[current name]/config.php /etc/routersliceconfig.php
+This is just a helper to think of the things you might need to actually recreate this site. If you are hoping for something exhaustive you are out of luck. The object here is to show how you can integrate HOBA into your own site, not recreate the demo this code provides. All of this assumes using apache2. you probably want tls certs, but it's not clear they are strictly needed. (come on, this is security related so...).
 
-    need to do this for fakesys, fakesco, fakinks
-
-    for teleworker to have a fakedroid emulator:
-
-    ln -s ~/faux/fakedroid /var/www/site
-
-28) sendmail
-    on fakesys and fakesco, configure mail:
-
-    o apt-get install sendmail
-    o pear install Net_SMTP Mail
-    o edit /etc/mail/sendmail.mc add:
-       define(`confDOMAIN_NAME', `fakesys.local')dnl		// on fakesys
-       define(`confDOMAIN_NAME', `fakesco.com')dnl		// on fakesco
-    o make
-    o service sendmail restart
-    o edit the config.php files in ~/faux/fake[sys|sco] to set mailhost and smtphost to be localhost,
-      and set the no-reply to be the same as the confDOMAIN_NAME's above.
-      
-33) to get sqlite working instead of mysql:
-    o in ~/faux/fakesys/config.php change: $dbname = "../dbs/fakesys.db";
-    o in ~/faux/fakesco/config.php change: $dbname = "../dbs/fakesco.db";
-    o cd ~/faux; chown www-data.www-data dbs; chown www-data.www-data dbs/*.db;
-    o cd ~/faux; chmod ug+w dbs; chmod ug+w dbs/*.db;
+1) packages
+   for ubuntu, it looks something like this:
+   o apache2, sqlite3, libapache2-mod-php php7, php-pear, php7-sqlite
+2) getting the source
+   git clone https://github.com/shirikodama/hoba-bis.git [where ever you want the code]
+3) to create the hoba database:
+   cd dbs; sudo sqlite3 < dbdefs.sql
+   chown www-data.www-data dbs; chown www-data.www-data dbs/*.db;
+   chmod ug+w dbs; chmod ug+w dbs/*.db;
+4) /var/www/html
+   the code doesn't actually care where it lives, but if you're using apache2 you can always either put it in a /var/www/html directory or just symlink it
+5) sending mail
+   If you want to test the enroll new device functionality, you need to have sendmail running. The code here is very simple and naive to the complexites of running a port 25 speaking sendmail. I managed to send mail to one of my gmail accounts from a residential IP block, but you may not be so lucky. Running this in a cloud VM where the SPF, and DKIM records are setup correctly, as well as setting up reverse DNS, etc working for the domain you're posing as... the long and short of this it that you need to have a host that looks like a well behaved port 25 speaker to other email listeners.
