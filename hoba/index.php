@@ -5,7 +5,7 @@
  *	Module: index.php
  *	Created: Fri Mar 22 13:32:57 2013
  *	Abstract
- *      License: http://www.gnu.org/licenses/gpl-2.0.html	   	   	   	   
+ *  License: http://www.gnu.org/licenses/gpl-2.0.html	   	   	   	   
  *	   
  */
 

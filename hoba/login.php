@@ -19,8 +19,7 @@ require_once ("hobacmn.php");
 
 
 function setlogin ($u) {
-    global $opts, $logincookiehost, $swdb, $sessname;
-    setcookie ("${sessname}login", "$u->uname|", time ()-3600, "/", $logincookiehost);
+    global $opts, $swdb, $sessname;
     $swdb->updAccess ($u->uid, $_SERVER['REMOTE_ADDR']);
 }
 
