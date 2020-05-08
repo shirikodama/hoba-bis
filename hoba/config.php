@@ -11,8 +11,12 @@
 /* Edit History: 
  */
 
-$siteurl = '//out.mtcc.com/hoba-bis/';
-$baseurl = '//out.mtcc.com/hoba-bis/hoba/';
+$p = parse_url ($_SERVER['REQUEST_URI']);
+$idx = strrpos ($p['path'] , "/");
+$bpath = substr ($p['path'], 0, strlen($p['path']) -(strlen($p['path']) - $idx-1));
+$path = substr ($bpath, 0, strlen($bpath)-strlen ('/hoba'));
+$siteurl = "//out.mtcc.com/$path";
+$baseurl = "//out.mtcc.com$bpath";
 $sessname = "hoba";
 $appName = 'Hoba Demo';
 $dbname = 'hoba.db';

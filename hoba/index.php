@@ -50,7 +50,7 @@ if (@$opts['uname'])
 else if ($u)
     $user = $u->uname;
 
-$temppass = isset ($opts['temppass']) ? $opts['temppass'] : '';
+$OTP = isset ($opts['OTP']) ? $opts['OTP'] : '';
 
 ?>
 <script type=text/javascript>
@@ -64,7 +64,7 @@ onloader (function () {
     st.main = new mainPage ('st.main',
            {app:'mainpage', main:'maincontainer', 'img':'../common/imgs/hoba-meteor.jpg',
                    title:'The Hoba Meteorite in Namibia', loginbox:'loginpanecontainer', user:'<?php print($user)  ?>',
-                   temppass:'<?php print($temppass) ?>'                  
+                   OTP:'<?php print($OTP) ?>'                  
                    });
 });
 

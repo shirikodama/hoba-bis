@@ -37,14 +37,13 @@ function phzDialog (fn, msg, buttons) {
     phzDialog.pane.display (1);
 }
 
-function phzAlert (fn, msg, title, size, buttontxt) {
+function phzAlert (msg, title, size, buttontxt) {
     if (! size)
 	size = { w:250, h:200 };
     if (! phzDialog.pane) {
 	phzDialog.pane = new htmlpane ('phzdialog', 'dialogcontainer', 0, 0);
 	phzDialog.pane.z (1000);
     }
-    phzDialog.fn = fn;
     var newc = '';
     if (! title)
 	title = "Alert";
@@ -79,7 +78,7 @@ phzDialog.confirm = function (answer) {
 };
 
 function phzInfo (title, msg) {
-    phzAlert (null, msg, title);
+    phzAlert (msg, title);
     setTimeout (function () {
 	phzDialog.pane.display (0);
     }, 1500);

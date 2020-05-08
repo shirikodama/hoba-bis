@@ -55,8 +55,8 @@ $newuser->joindate = strftime ("%Y%m%d");
 // check to see if they are joining with the same user and pubkey... an edge case to be sure.
 $rejoin = false;
 if ($u = $swdb->fetchuser ($opts ['uname'])) {
-    $pubkey = $swdb->fetchUserPubkey ($u->uid, $opts['pubkey']);                
-    if (! $pubkey) {
+    $pubkey = $swdb->fetchUserPubkey ($u->uid, $opts['pubkey']);
+    if (! $pubkey || $opts['email'] != $u->email) {
         sendResp (USERTAKEN, "User name ${opts['uname']} taken", NULL);
     } else {
         $rejoin = true;

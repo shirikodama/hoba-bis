@@ -21,8 +21,8 @@ define ("UNENROLLED", 401);
 define ("NOUSER", 404);
 define ("USERTAKEN", 405);
 define ("SIGERROR", 406);
-define ("TEMPPASSEXPIRED", 408);
-define ("TEMPPASSWRONG", 410);
+define ("OTPEXPIRED", 408);
+define ("OTPWRONG", 410);
 
 define ("SERVERERROR", 500);
 define ("BADREQUEST", 501);
@@ -31,7 +31,7 @@ define ("BADEMAIL", 507);
 
 // other constants
 
-define ("TEMPPASSTMO", 1800);       // how long the otp should be valid for. 30 minutes sounds ok.
+define ("OTPTMO", 1800);       // how long the otp should be valid for. 30 minutes sounds ok.
 define ("NONCETMO", 1*60);          // how long the nonce should be good for
 define ("SIGTMO", 2*60);            // how long a sig should be good for
 
@@ -79,16 +79,16 @@ function hobaChecks ($opts, $from) {
     return true;
 }
 
-function hobaLoginChecks ($u, $opts) {
+function hobaLoginChecks ($u, $opts, $from) {
     global $swdb, $baseurl, $appName;
 
     /* check for enrolling new keys */
     if (isset ($opts ['enrolldevice'])) {
-        $temppass = genRandomPassword (6, '0123456789abcdefghijklmnopqrstuvwxyz');
+        $OTP = genRandomPassword (6, '0123456789abcdefghijklmnopqrstuvwxyz');
         // set the password for a 30 minute validity 
-        $swdb->setUserTempPass ($u->uid, $temppass, time ()+TEMPPASSTMO);
-        $loginurl = sprintf ("https:%sindex.php?uname=%s&temppass=%s", $baseurl, urlencode ($u->uname), urlencode ($temppass));
-        $helpnote = "A new device is requesting access to your $appName for $u->uname. To allow this device access use this code: <a href=\"$loginurl\">$temppass</a>\nIf you don't approve, do nothing.";
+        $swdb->setUserOTP ($u->uid, $OTP, time ()+OTPTMO);
+        $loginurl = sprintf ("https:%sindex.php?uname=%s&OTP=%s", $baseurl, urlencode ($u->uname), urlencode ($OTP));
+        $helpnote = "A new device is requesting access to your $appName for $u->uname. To allow this device access use this code: <a href=\"$loginurl\">$OTP</a>\nIf you don't approve, do nothing.";
         mailto ($u->email, "$appName login information", $helpnote);
         sendResp (OK, "Check your email your OTP to login", NULL);
     } else if (isset ($opts ['gennonce'])) {
@@ -100,18 +100,18 @@ function hobaLoginChecks ($u, $opts) {
         $swdb->setUserNonce ($u->uid, $nonce, time ()+NONCETMO);
         // XXX: the nonce needs to go into the http headers
         sendResp (NONCEREPLY, "$nonce", NULL);        
-    } else if (isset ($opts ['temppass'])) {
-        if (trim ($opts ['temppass']) != $u->temppass)
-            sendResp (TEMPPASSWRONG, "invalid OTP", NULL);
-        if ($u->temppasstmo < time ())
-            sendResp (TEMPPASSEXPIRED, "OTP expired", NULL);
+    } else if (isset ($opts ['OTP'])) {
+        if (trim ($opts ['OTP']) != $u->OTP)
+            sendResp (OTPWRONG, "invalid OTP", NULL);
+        if ($u->OTPtmo < time ())
+            sendResp (OTPEXPIRED, "OTP expired", NULL);
     } else if (isset ($opts ['usertaken'])) {
         sendResp (OK, "User name is available", NULL);
     } else {
         $pubkey = $swdb->fetchUserPubkey ($u->uid, $opts['pubkey']);        
         if (! $pubkey) {
             // run the other checks to make certain that the key is legit and just unenrolled
-            hobaChecks ($opts);
+            hobaChecks ($opts, $from);
             sendResp (UNENROLLED, "Unenrolled key", NULL);
         }
     }
@@ -120,9 +120,9 @@ function hobaLoginChecks ($u, $opts) {
 
 function hobaFinishLogin ($u, $opts) {
     global $swdb;
-    if (isset ($opts ['temppass'])) {
+    if (isset ($opts ['OTP'])) {
         // clear the temp password and enroll the key
-        $swdb->setUserTempPass ($u->uid, NULL, NULL);    
+        $swdb->setUserOTP ($u->uid, NULL, NULL);    
         $swdb->appendUserPubkey ($u->uid, $opts ['pubkey']);
     }
     return true;

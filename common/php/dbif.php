@@ -149,11 +149,11 @@ class dbif {
             return false;	
     }
 
-    function setUserTempPass ($uid, $temppass, $temppasstmo) {
-        $this->curq = 'update users set temppass=?, temppasstmo=? where uid=?';
+    function setUserOTP ($uid, $OTP, $OTPtmo) {
+        $this->curq = 'update users set OTP=?, OTPtmo=? where uid=?';
         $q = $this->prepare ($this->curq);
-        $q->bindParam (1, $temppass);
-        $q->bindParam (2, $temppasstmo);
+        $q->bindParam (1, $OTP);
+        $q->bindParam (2, $OTPtmo);
         $q->bindParam (3, $uid);
         if ($this->exec ($q) == false)
             return false;	

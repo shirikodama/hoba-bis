@@ -17,12 +17,6 @@ require_once ("common/php/utils.php");
 require_once ("common/php/dochead.php");
 $jsl = new jsloader (NULL);
 $jsl->addJs ("var baseurl = '$baseurl';");
-$jsl->addFile ("js/utils.js");
-$jsl->addFile ("js/htmlutils.js");
-$jsl->addFile ("js/htmlpane.js");
-$jsl->addFile ("js/dialogs.js");
-$jsl->addFile ("js/loginbox.js");
-$jsl->addFile ("js/ajax.js");
 $jsl->addFile ("css/style.css");
 $jsl->load ();
 ?>

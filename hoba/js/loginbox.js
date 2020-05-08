@@ -47,8 +47,8 @@ function loginbox (prefix, appname, baseurls, containers) {
     this.UNENROLLED = 401;
     this.NOUSER = 404;
     this.SIGERROR = 406;
-    this.TEMPPASSEXPIRED = 408;
-    this.TEMPPASSWRONG = 410;    
+    this.OTPEXPIRED = 408;
+    this.OTPWRONG = 410;    
 
     this.SERVERERROR = 500;
     this.BADREQUEST = 501;
@@ -60,14 +60,14 @@ loginbox.prototype.login = function () {
     if (this.pubkeyLoginEnabled) 
 	this.pubkeyLogin ();
     else
-	phzAlert (null, "Public Key Login not available on this device");
+	phzAlert ("Public Key Login not available on this device");
 };
 
 loginbox.prototype.join = function () {
     if (this.pubkeyLoginEnabled) 
 	this.pubkeyJoin ();
     else
-	phzAlert (null, "Public Key Join not supported on this device");
+	phzAlert ("Public Key Join not supported on this device");
 };
 
 loginbox.prototype.pubkeyJoin = function () {
@@ -93,14 +93,13 @@ loginbox.prototype.pubkeyJoinForm = function () {
     var el = document.getElementById (this.prefix+'.uname');
     var uname = el.value;
     if (! uname) {
-	this.log ("You must supply a user name");
+	phzAlert ("You must supply a user name");
 	return;
     }
-    // XXX: we could check to see if it's in the credential store first for double join.
     el = document.getElementById (this.prefix+'.email');
     var email = el.value || '';
     if (email.indexOf ('@') < 0) {
-	this.log ("You must supply a valid email");
+	phzAlert ("You must supply a valid email");
 	return;
     }
     el = document.getElementById (this.prefix+'.webcrypto');
@@ -120,11 +119,9 @@ loginbox.prototype.pubkeyLogin = function () {
     html += this.pane.title ("Login to " + title, this.prefix+".pane.display(0);");
     html += '<div class="paneContents">';
     html += '<div id='+this.prefix+'.lbmsg class=newX>'+this.msg+'</div>';
-    //this.log ("before getItem...");
     var user = this.getItem (this.appname+"-curuser");
     if (! user)
 	user = '';
-    //this.log("user to login is " + user);
     html += sprintf ('<div><table><tr ><tr><td><b>User Name</b><td><input id='+this.prefix+'.uname value="%s" size=16>', user)+'</td></tr>';
     html += '<tr><td valign=bottom colspan=2><br>'+phzbutton ('', 'Login', this.prefix+'.pubkeyLoginForm ()','float:right')+'</td></tr>';    
     html += '<tr><td><a class=mediumA href=# onclick="'+this.prefix+'.join ()">Join Now</a></td></tr>';
@@ -143,7 +140,7 @@ loginbox.prototype.pubkeyEnroll = function (user, msg) {
 	html += '<div id='+this.prefix+'.lbmsg class=newX>'+msg+'</div>';
     html += '<div class="paneContents">';    
     html += sprintf ('<table><tr><td><b>Username</b><td><input id='+this.prefix+'.uname value="%s" size=16 readonly>', user);
-    html += '<tr><td><b>OTP (from email)</b><td><input id='+this.prefix+'.temppass size=16>';
+    html += '<tr><td><b>OTP (from email)</b><td><input id='+this.prefix+'.OTP size=16>';
     html += '<tr><td valign=top colspan=2>'+phzbutton ('', 'Send', this.prefix+'.pubkeyLoginForm ()','float:right');
     html += '</table>';
     html += '<h4>Check your email now for the one time password to start using this device</h4>';
@@ -160,14 +157,14 @@ loginbox.prototype.pubkeyLoginForm = function () {
     var el = document.getElementById (this.prefix+'.uname');
     var uname = el.value;
     if (! uname) {
-	phzAlert (null, "You must supply a username");
+	phzAlert ("You must supply a username");
 	return;
     }
-    var el = document.getElementById (this.prefix+'.temppass');
-    var temppass = null;
+    var el = document.getElementById (this.prefix+'.OTP');
+    var OTP = null;
     if (el)
-	temppass = el.value;    
-    this.sendPubkeyLogin (uname, temppass);
+	OTP = el.value;    
+    this.sendPubkeyLogin (uname, OTP);
 };
 
 // ==begin HOBA==
@@ -184,7 +181,7 @@ loginbox.prototype.sendPubkeyEnroll = async function (user, msg) {
 				state.msg = "No such user "+user;
 				state.pubkeyLogin ();
 			    } else
-				phzAlert (null, "Can't Enroll: "+r.comment);
+				phzAlert ("Can't Enroll: "+r.comment);
 			    return;
 			} 
     }, null, post);
@@ -192,10 +189,10 @@ loginbox.prototype.sendPubkeyEnroll = async function (user, msg) {
 };
 
 
-loginbox.prototype.sendPubkeyLogin = async function (uname, temppass) {
+loginbox.prototype.sendPubkeyLogin = async function (uname, OTP) {
     var key;
     phzDialog.close ();    
-    if (temppass) {
+    if (OTP) {
 	key = await this.genKeyPair (true);
     } else {
 	key = this.getCredential (uname);
@@ -205,8 +202,8 @@ loginbox.prototype.sendPubkeyLogin = async function (uname, temppass) {
     }
     var url = "login.php";
     var post = sprintf ("uname=%s",encodeURIComponent (uname));
-    if (temppass) {
-	post += '&temppass='+encodeURIComponent (temppass);
+    if (OTP) {
+	post += '&OTP='+encodeURIComponent (OTP);
     }
     post = await this.signURL (post, key, 'login');
     url = this.baseurl + url;
@@ -216,24 +213,24 @@ loginbox.prototype.sendPubkeyLogin = async function (uname, temppass) {
 	    if (r.resp == state.UNENROLLED) {
 		state.removeCredential (state.credprefix, uname);	
 		state.sendPubkeyEnroll (uname, '');
-	    } else if (r.resp == state.TEMPPASSWRONG) {
-		phzAlert (null, 'Your OTP is incorrect');
+	    } else if (r.resp == state.OTPWRONG) {
+		phzAlert ('Your OTP is incorrect');
 		return;
-	    } else if (r.resp == state.TEMPPASSEXPIRED) {
+	    } else if (r.resp == state.OTPEXPIRED) {
 		state.sendPubkeyEnroll (uname, 'Your OTP has expired; a new one will be sent to you');		
 		return;
 	    } else		
-		phzAlert (null, "Can't login: "+r.comment);
+		phzAlert ("Can't login: "+r.comment);
 	    return;
 	}
-	if (temppass) {
+	if (OTP) {
 	    state.storeKeys (uname, key);
 	}	    
 	state.setItem (state.appname+"-curuser", uname);
 	if (state.onLoggedIn)
 	    state.onLoggedIn (false, uname);	
 	state.pane.display (0);
-	if (temppass) {
+	if (OTP) {
 	    top.location.href = top.location.pathname;
 	}
     }, null, post);
@@ -254,7 +251,7 @@ loginbox.prototype.sendPubkeyJoin = async function (uname, email, webcrypto) {
     var state = this;
     fetchServer ("POST", url, function (r, params, sts) {
 	if (r.resp >= 300) {
-	    phzAlert (null, "Can't join: "+r.comment);
+	    phzAlert ("Can't join: "+r.comment);
 	    return;
 	}
 	state.storeKeys (uname, key);
@@ -265,8 +262,8 @@ loginbox.prototype.sendPubkeyJoin = async function (uname, email, webcrypto) {
 };
 
 // for logging in from the OTP email
-loginbox.prototype.sendTempPass = function (uname, temppass) {    
-    this.sendPubkeyLogin (uname, temppass);
+loginbox.prototype.sendOTP = function (uname, OTP) {    
+    this.sendPubkeyLogin (uname, OTP);
 };
 
 // credential storage utilities

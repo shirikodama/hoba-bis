@@ -40,7 +40,7 @@ if (($u = $swdb->fetchUser ($opts ['uname'])) == NULL) {
 }
 
 // login specific checks
-hobaLoginChecks ($u, $opts);
+hobaLoginChecks ($u, $opts, 'login');
 // check out that the signature verfies, etc
 hobaChecks ($opts, 'login');
 // finish up logging in
