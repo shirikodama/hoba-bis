@@ -160,16 +160,45 @@ class dbif {
         return true;
     }
 
-    function setUserNonce ($uid, $nonce, $noncetmo) {
-        $this->curq = 'update users set hobanonce=?, hobanoncetmo=? where uid=?';
+    function fetchUserNonce ($uname, $nonce) {
+        $this->curq = 'select * from usernonces where uname=? and nonce=?';
         $q = $this->prepare ($this->curq);
-        $q->bindParam (1, $nonce);
-        $q->bindParam (2, $noncetmo);
-        $q->bindParam (3, $uid);
+	$q->bindParam (1, $uname);
+        $q->bindParam (2, $nonce);
+        $res = $this->exec ($q);
+	$rv = $this->fetch ($res);
+        return $rv;
+    }
+
+    function appendUserNonce ($uname, $nonce, $noncetmo) {
+        $this->curq = 'insert into usernonces (uname, nonce, noncetmo) values (?, ?, ?)';
+        $q = $this->prepare ($this->curq);
+	$q->bindParam (1, $uname);
+        $q->bindParam (2, $nonce);
+        $q->bindParam (3, $noncetmo);
         if ($this->exec ($q) == false)
             return false;	
         return true;
     }
+
+    function deleteUserNonce ($uname, $nonce) {
+        $this->curq = 'delete from usernonces where uname=? and nonce=?';
+        $q = $this->prepare ($this->curq);
+	$q->bindParam (1, $uname);
+        $q->bindParam (2, $nonce);
+        if ($this->exec ($q) == false)
+            return false;
+	return true;
+    }
+
+    function purgeUserNonce ($expires) {
+        $this->curq = 'delete from usernonces where noncetmo < ?';
+        $q = $this->prepare ($this->curq);
+        $q->bindParam (1, $expires);
+        $this->exec ($q);
+	return true;
+    }
+
 
     function appendUserPubkeyReplayCache ($signature, $time, $expires) {
         $this->curq = "insert into userpubkeyreplaycache (signature, timestamp, expires) values (?, ?, ?)";

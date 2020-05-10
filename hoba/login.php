@@ -5,7 +5,8 @@
  *	Module: login.php
  *	Created: Fri Mar 22 13:33:19 2013
  *	Abstract:
- *      License: http://www.gnu.org/licenses/gpl-2.0.html	   	   	   	    *	   
+ *      License: http://www.gnu.org/licenses/gpl-2.0.html
+ *	   
  */
 
 /* Edit History: 
@@ -35,7 +36,8 @@ if (($swdb = new dbif ()) == NULL) {
 }
 
 if (($u = $swdb->fetchUser ($opts ['uname'])) == NULL) {
-    sendResp (NOUSER, "No such user", NULL);
+    if (! $opts ['gennonce'])
+	sendResp (NOUSER, "No such user", NULL);
 }
 
 // login specific checks

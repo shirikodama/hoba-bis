@@ -276,64 +276,7 @@ function str2ab(str) {
     return buf;
 }
 
-
-function textToArrayBuffer(str) {
-    var buf = unescape(encodeURIComponent(str)) // 2 bytes for each char
-    var bufView = new Uint8Array(buf.length)
-    for (var i=0; i < buf.length; i++) {
-	bufView[i] = buf.charCodeAt(i)
-    }
-    return bufView
+function buf2hex(buffer) { // buffer is an ArrayBuffer
+    return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
 }
-
-function convertPemToBinary(pem) {
-    var lines = pem.split('\n')
-    var encoded = ''
-    for(var i = 0;i < lines.length;i++){
-	if (lines[i].trim().length > 0 &&
-	    lines[i].indexOf('-BEGIN RSA PRIVATE KEY-') < 0 &&
-	    lines[i].indexOf('-BEGIN RSA PUBLIC KEY-') < 0 &&
-	    lines[i].indexOf('-END RSA PRIVATE KEY-') < 0 &&
-	    lines[i].indexOf('-END RSA PUBLIC KEY-') < 0) {
-	    encoded += lines[i].trim()
-	}
-    }
-    return base64StringToArrayBuffer(encoded)
-}
-
-function base64StringToArrayBuffer(b64str) {
-    var byteStr = atob(b64str)
-    var bytes = new Uint8Array(byteStr.length)
-    for (var i = 0; i < byteStr.length; i++) {
-	bytes[i] = byteStr.charCodeAt(i)
-    }
-    return bytes.buffer
-}
-
-function arrayBufferToBase64String(arrayBuffer) {
-    var byteArray = new Uint8Array(arrayBuffer)
-    var byteString = ''
-    for (var i=0; i<byteArray.byteLength; i++) {
-	byteString += String.fromCharCode(byteArray[i])
-    }
-    return btoa(byteString)
-}
-
-function convertBinaryToPem(binaryData, label) {
-    var base64Cert = arrayBufferToBase64String(binaryData)
-    var pemCert = "-----BEGIN " + label + "-----\r\n"
-    var nextIndex = 0
-    var lineLength
-    while (nextIndex < base64Cert.length) {
-	if (nextIndex + 64 <= base64Cert.length) {
-	    pemCert += base64Cert.substr(nextIndex, 64) + "\r\n"
-	} else {
-	    pemCert += base64Cert.substr(nextIndex) + "\r\n"
-	}
-	nextIndex += 64
-    }
-    pemCert += "-----END " + label + "-----\r\n"
-    return pemCert
-}
-
 

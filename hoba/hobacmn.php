@@ -18,6 +18,7 @@ define ("NONCEREPLY", 202);
 
 define ("DBDOWN", 400);
 define ("UNENROLLED", 401);
+define ("DIGESTERROR", 402);
 define ("NOUSER", 404);
 define ("USERTAKEN", 405);
 define ("SIGERROR", 406);
@@ -38,18 +39,41 @@ define ("SIGTMO", 2*60);            // how long a sig should be good for
 // This is the heart of the server side HOBA code. This just a simplified version of what would need to take place on any authentication backend.
 // You can see what the needed fields are by looking at dbs/dbdefs.sql with both the user table and the userpubkeys and userpubkeyreplaycache tables
 
-function sendResp ($code, $msg, $loc) {
+function sendResp ($code, $msg, $loc=NULL) {
     die ("$code $msg\n");
 }
 
 function hobaChecks ($opts, $from) {
     global $swdb;
+    if (@$opts['hash']) {
+        $hash = $opts['hash'];
+    } else
+        $hash = OPENSSL_ALGO_SHA256;
     $body = file_get_contents('php://input');
     $pos = strpos ($body, "&signature=");
     if ($pos === false) 
         sendResp (SIGERROR, "signature not found", NULL);
     $body = substr ($body, 0, $pos);
-    $body = $from . $body;
+    if (isset ($opts['digest'])) {
+	$swdb->purgeUserNonce (time ());
+	$nonce = $swdb->fetchUserNonce ($opts['uname'], $opts['snonce']);
+	if (! $nonce)
+	    sendResp (NONCETMO, "nonce sent is expired or missing");
+	$snonce = $nonce->nonce;
+	if ($nonce->noncetmo < time ())
+	    sendResp (NONCETMO, "nonce sent is expired");
+	$digeststr = 'POST:' . $from . ':' . $snonce . ':' . $opts['cnonce'] . ':auth';
+	// php hash outputs a hex string of the digest by default. we'll go with that as our canonicalization as good as any
+	$cdigest = strtolower (hash ($hash, $digeststr));
+	$sdigest = base64_decode($opts ['digest']);
+	if ($cdigest != $sdigest) {
+	    sendResp (DIGESTERROR, "digests do not match", NULL);
+	}
+	$from = '';
+	$nonce = $swdb->deleteUserNonce ($opts['uname'], $opts['snonce']);
+    } else {
+	$body = 'POST:' . $from . ':' . $body;
+    }	
     if (! isset ($opts ['pubkey'])) {
         sendResp (SIGERROR, "bad login auth method", NULL);
     }
@@ -67,23 +91,26 @@ function hobaChecks ($opts, $from) {
     if ($swdb->fetchUserPubkeyReplayCache ($opts ['signature'])) {
         sendResp (SIGERROR, "replay detected", NULL);
     }
-    if (@$opts['hash']) {
-        $hash = $opts['hash'];
-    } else
-        $hash = OPENSSL_ALGO_SHA256;
     if (! openssl_verify ($body, base64_decode ($opts ['signature']), $pkeyid, $hash)) {
         sendResp (SIGERROR, "bad signature", NULL);
     }
-    $swdb->appendUserPubkeyReplayCache ($opts ['signature'], $opts ['curtime'], time ()+3600);
-    $swdb->purgeUserPubkeyReplayCache (time ());
+    if (! isset ($opts['digest'])) {   
+	$swdb->appendUserPubkeyReplayCache ($opts ['signature'], $opts ['curtime'], time ()+3600);
+	$swdb->purgeUserPubkeyReplayCache (time ());
+    }
     return true;
 }
 
 function hobaLoginChecks ($u, $opts, $from) {
     global $swdb, $baseurl, $appName;
 
-    /* check for enrolling new keys */
-    if (isset ($opts ['enrolldevice'])) {
+    if (isset ($opts ['gennonce'])) {
+        $nonce = genRandomPassword (16, '0123456789abcdefghijklmnopqrstuvwxyz');
+        // set the nonce for a 1 minute validity 
+        $swdb->appendUserNonce ($opts ['uname'], $nonce, time ()+NONCETMO);
+        sendResp (NONCEREPLY, "$nonce", NULL);        
+    } else  if (isset ($opts ['enrolldevice'])) {
+	/* check for enrolling new keys */
         $OTP = genRandomPassword (6, '0123456789abcdefghijklmnopqrstuvwxyz');
         // set the password for a 30 minute validity 
         $swdb->setUserOTP ($u->uid, $OTP, time ()+OTPTMO);
@@ -91,15 +118,6 @@ function hobaLoginChecks ($u, $opts, $from) {
         $helpnote = "A new device is requesting access to your $appName for $u->uname. To allow this device access use this code: <a href=\"$loginurl\">$OTP</a>\nIf you don't approve, do nothing.";
         mailto ($u->email, "$appName login information", $helpnote);
         sendResp (OK, "Check your email your OTP to login", NULL);
-    } else if (isset ($opts ['gennonce'])) {
-        $u = $swdb->fetchUser ($opts ['uname']);
-        if (! $u)
-            sendResp (NOUSER, "no such user", NULL);
-        $nonce = genRandomPassword (16, '0123456789abcdefghijklmnopqrstuvwxyz');
-        // set the nonce for a 1 minute validity 
-        $swdb->setUserNonce ($u->uid, $nonce, time ()+NONCETMO);
-        // XXX: the nonce needs to go into the http headers
-        sendResp (NONCEREPLY, "$nonce", NULL);        
     } else if (isset ($opts ['OTP'])) {
         if (trim ($opts ['OTP']) != $u->OTP)
             sendResp (OTPWRONG, "invalid OTP", NULL);

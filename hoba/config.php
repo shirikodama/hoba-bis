@@ -18,7 +18,10 @@ $path = substr ($bpath, 0, strlen($bpath)-strlen ('/hoba'));
 $siteurl = "//out.mtcc.com/$path";
 $baseurl = "//out.mtcc.com$bpath";
 $sessname = "hoba";
-$appName = 'Hoba Demo';
+if (strpos ($p['path'], '-dev-') === false)
+    $appName = 'Hoba Demo';
+else
+    $appName = 'Dev Hoba';
 $dbname = 'hoba.db';
 $mailhost = 'out.mtcc.com';
 $mailnoreply = 'no-reply@mtcc.com';

@@ -28,6 +28,8 @@ function loginbox (prefix, appname, baseurls, containers) {
     this.msg = '';
     this.pubkeyLoginEnabled = window.Crypto && navigator.credentials;
     this.subtle = window.crypto.subtle;
+    this.useDigest = true;
+    this.snonce = null;
     this.alg = {
 	name: "RSASSA-PKCS1-v1_5",
 	hash: {
@@ -78,7 +80,8 @@ loginbox.prototype.pubkeyJoin = function () {
     html += '<table>';
     html += '<tr><td><b>User Name</b><td><input id='+this.prefix+'.uname size=16></td></tr>';
     html += '<tr><td><b>Email</b><td><input id='+this.prefix+'.email size=16>'+'</td></tr>';
-    html += '<tr><td><b>WebCrypto?</b><td><input type="checkbox" checked id='+this.prefix+'.webcrypto>(unchecked = js RSA)'+'</td></tr>';    
+    html += '<tr><td><b>WebCrypto?</b><td><input type="checkbox" checked id='+this.prefix+'.webcrypto><span style="font-size:10px">(unchecked = js RSA)</span>'+'</td></tr>';
+    html += '<tr><td><b>Digest?</b><td><input type="checkbox" checked id='+this.prefix+'.digest><span style="font-size:10px">(unchecked = time based)</span>'+'</td></tr>'; 
     html += '<tr><td colspan=2><br>'+phzbutton ('smjoin', 'Join', this.prefix+".pubkeyJoinForm ()", "float:right")+'</td></tr>';
     html += '<tr><td><a class=mediumA href=# onclick="'+this.prefix+'.login ()">Login</a></td></tr>';
     html += '</table>';
@@ -104,6 +107,8 @@ loginbox.prototype.pubkeyJoinForm = function () {
     }
     el = document.getElementById (this.prefix+'.webcrypto');
     var webcrypto = el.checked;        
+    el = document.getElementById (this.prefix+'.digest');
+    this.useDigest = el.checked;        
     this.sendPubkeyJoin (uname, email, webcrypto);
 };
 
@@ -123,7 +128,8 @@ loginbox.prototype.pubkeyLogin = function () {
     if (! user)
 	user = '';
     html += sprintf ('<div><table><tr ><tr><td><b>User Name</b><td><input id='+this.prefix+'.uname value="%s" size=16>', user)+'</td></tr>';
-    html += '<tr><td valign=bottom colspan=2><br>'+phzbutton ('', 'Login', this.prefix+'.pubkeyLoginForm ()','float:right')+'</td></tr>';    
+    html += '<tr><td><b>Digest?</b><td><input type="checkbox" checked id='+this.prefix+'.digest><span style="font-size:10px">(unchecked = time based)</span>'+'</td></tr>';     
+    html += '<tr><td valign=bottom colspan=2><br>'+phzbutton ('', 'Login', this.prefix+'.pubkeyLoginForm ()','float:right')+'</td></tr>';
     html += '<tr><td><a class=mediumA href=# onclick="'+this.prefix+'.join ()">Join Now</a></td></tr>';
     html += '</table></div>';
     this.pane.size (this.paneWidth, this.paneHeight);
@@ -141,6 +147,7 @@ loginbox.prototype.pubkeyEnroll = function (user, msg) {
     html += '<div class="paneContents">';    
     html += sprintf ('<table><tr><td><b>Username</b><td><input id='+this.prefix+'.uname value="%s" size=16 readonly>', user);
     html += '<tr><td><b>OTP (from email)</b><td><input id='+this.prefix+'.OTP size=16>';
+    html += '<tr><td><b>Digest?</b><td><input type="checkbox" checked id='+this.prefix+'.digest><span style="font-size:10px">(unchecked = time based)</span>'+'</td></tr>';     
     html += '<tr><td valign=top colspan=2>'+phzbutton ('', 'Send', this.prefix+'.pubkeyLoginForm ()','float:right');
     html += '</table>';
     html += '<h4>Check your email now for the one time password to start using this device</h4>';
@@ -163,34 +170,55 @@ loginbox.prototype.pubkeyLoginForm = function () {
     var el = document.getElementById (this.prefix+'.OTP');
     var OTP = null;
     if (el)
-	OTP = el.value;    
+	OTP = el.value;
+    el = document.getElementById (this.prefix+'.digest');
+    this.useDigest = el.checked;            
     this.sendPubkeyLogin (uname, OTP);
 };
 
 // ==begin HOBA==
 
 
-loginbox.prototype.sendPubkeyEnroll = async function (user, msg) {
-    var url = this.baseurl+'/login.php';
-    var post = 'enrolldevice=true&uname='+encodeURIComponent (user);
+// this is the high level enroll new key flow
+
+loginbox.prototype.sendPubkeyEnroll = async function (uname, msg) {
+    this.uname = uname;
+    var url = this.baseurl+'login.php';
+    var post = 'enrolldevice=true&uname='+encodeURIComponent (uname);
     var state = this;
     phzDialog.close ();
     fetchServer ("POST", url, function (r) {
 			if (r.resp >= 300) {
 			    if (r.resp == state.NOUSER) {
-				state.msg = "No such user "+user;
+				state.msg = "No such user "+uname;
 				state.pubkeyLogin ();
 			    } else
 				phzAlert ("Can't Enroll: "+r.comment);
 			    return;
 			} 
     }, null, post);
-    this.pubkeyEnroll (user, msg);
+    this.pubkeyEnroll (uname, msg);
 };
 
+// this is the high level login flow
 
 loginbox.prototype.sendPubkeyLogin = async function (uname, OTP) {
     var key;
+    this.uname = uname;
+    var state = this;
+    if (this.useDigest && ! this.snonce) {
+	var url ='login.php';
+	var post = 'gennonce=true&uname='+encodeURIComponent (uname);
+	fetchServer ("POST", url, function (r, params, sts) {
+	    if (r.resp >= 300) {
+		phzAlert ("Can't get nonce: "+r.comment);
+		return r.comment;
+	    }	
+	    state.snonce = r.comment;
+	    state.sendPubkeyLogin (uname, OTP);
+	}, null, post);
+	return;
+    }
     phzDialog.close ();    
     if (OTP) {
 	key = await this.genKeyPair (true);
@@ -207,11 +235,10 @@ loginbox.prototype.sendPubkeyLogin = async function (uname, OTP) {
     }
     post = await this.signURL (post, key, 'login');
     url = this.baseurl + url;
-    var state = this;
     fetchServer ("POST", url, function (r, params, sts) {
 	if (r.resp >= 300) {	    
 	    if (r.resp == state.UNENROLLED) {
-		state.removeCredential (state.credprefix, uname);	
+		state.removeCredential (uname);	
 		state.sendPubkeyEnroll (uname, '');
 	    } else if (r.resp == state.OTPWRONG) {
 		phzAlert ('Your OTP is incorrect');
@@ -236,8 +263,24 @@ loginbox.prototype.sendPubkeyLogin = async function (uname, OTP) {
     }, null, post);
 };
 
+// this is the high level join flow
 
 loginbox.prototype.sendPubkeyJoin = async function (uname, email, webcrypto) {
+    var state = this;
+    this.uname = uname;
+    if (this.useDigest && ! this.snonce) {
+	var url ='login.php';
+	var post = 'gennonce=true&uname='+encodeURIComponent (uname);
+	fetchServer ("POST", url, function (r, params, sts) {
+	    if (r.resp >= 300) {
+		phzAlert ("Can't get nonce: "+r.comment);
+		return r.comment;
+	    }
+	    state.snonce = r.comment;
+	    state.sendPubkeyJoin (uname, email, webcrypto);
+	}, null, post);
+	return;
+    }    
     var key = this.getCredential (uname);
     if (! key)
 	var key = await this.genKeyPair (webcrypto);
@@ -248,7 +291,6 @@ loginbox.prototype.sendPubkeyJoin = async function (uname, email, webcrypto) {
     phzDialog.close ();    
     post = await this.signURL (post, key, 'join');
     url = this.baseurl + url;
-    var state = this;
     fetchServer ("POST", url, function (r, params, sts) {
 	if (r.resp >= 300) {
 	    phzAlert ("Can't join: "+r.comment);
@@ -261,10 +303,128 @@ loginbox.prototype.sendPubkeyJoin = async function (uname, email, webcrypto) {
     }, null, post);
 };
 
-// for logging in from the OTP email
+// for logging in from the OTP email from the high level enroll new key flow
+
 loginbox.prototype.sendOTP = function (uname, OTP) {    
     this.sendPubkeyLogin (uname, OTP);
 };
+
+// lower level crypto drivers
+
+loginbox.prototype.genKeyPair = async function (webcrypto) {
+    var key = {};
+    if (webcrypto) {
+	var use = ["sign", "verify"];
+	var pk = await this.subtle.generateKey (this.alg, true, use);
+	key.keypair = pk;	
+	// decode private key
+	pkArray = await this.subtle.exportKey("pkcs8", pk.privateKey);
+	pkb64 = btoa (ab2str(pkArray));
+	key.privkey = pkb64;
+	key.webCrypto = true;
+    } else {
+	var rsa = new RSAKey ();
+	rsa.generate (1024, "10001");
+	key.privkey = this.fromPEM (rsa.privatePEM ());
+	key.webCrypto = false;	
+    }
+    return key;
+};
+
+loginbox.prototype.signURL = async function (url, key, from) {
+    var sig;
+    var hash = this.alg.hash.classicname;
+    if (key.webCrypto) {
+	if (! key.keypair) {
+	    var privkeydata = str2ab(atob(key.privkey));
+	    key.keypair = { privateKey: await this.subtle.importKey("pkcs8", privkeydata, this.alg, true, ["sign"]) };
+	} else {
+	    // decode public key		
+	    var pkArray = await this.subtle.exportKey("spki", key.keypair.publicKey);
+	    var pkb64 =  btoa (ab2str(pkArray));
+	    key.pubkey = pkb64;
+	}
+    } else {
+	var rsa = new RSAKey ();
+	rsa.readPrivateKeyFromPEMString (this.toPEM (key.privkey), true);
+	key.pubkey = this.fromPEM (rsa.publicPEM ());
+    }
+    url += '&pubkey='+ encodeURIComponent (key.pubkey);
+    url += '&curtime='+ new Date ().getTime ()/1000;
+    url += '&hash='+ hash;
+
+    if (this.useDigest) {
+	// this is taken with some modifcations from rfc 7616 (http digest auth)
+	// first there is no need for H1 since this is public key based. second i'm not quite sure what H2 buys,
+	// so I've just folded it into the whole string
+	var cnonce = '';
+	var snonce = this.snonce;
+	this.snonce = null;
+	var cn = crypto.getRandomValues(new Uint8Array(8));
+	for (var i in cn) {
+	    cnonce += cn [i]+'';
+	}
+	url += '&snonce='+snonce;
+	url += '&cnonce='+cnonce;
+	var digeststr = "POST:"+from+':'+snonce+':'+cnonce+':auth';
+	if (key.webCrypto) {	
+	    var pkArray = await this.subtle.digest (this.alg.hash.name, str2ab(digeststr));
+	    // make the canonical version of the digest be a hex encoded hash for agreement
+	    var digest = btoa (buf2hex(pkArray).toLowerCase ());
+	} else {
+	    var fn = 'hex_'+hash;
+	    var sha = window[fn] (digeststr);
+	    var digest = btoa (sha.toLowerCase ());	    
+	}
+	url += '&digest='+digest;
+	from = '';
+    } else {
+	from = "POST:"+from+':';
+    }    
+    if (key.webCrypto) {
+	sig = await this.subtle.sign(this.alg, key.keypair.privateKey, str2ab(from+url));
+	sig = btoa (ab2str(sig));
+    } else {
+	sig = hex2b64 (rsa.signString(from+url, hash));
+    }
+    url += '&signature=' + encodeURIComponent (sig);
+    return url;
+};
+
+loginbox.prototype.fromPEM = function (pkey) {
+    var key = pkey.split ("\n");
+    var out = '';
+    var founddash = 0;
+    
+    for (var i = 0; i < key.length; i++) {
+	if (key[i].trim().length > 0 &&
+	    key[i].indexOf('-BEGIN RSA PRIVATE KEY-') < 0 &&
+	    key[i].indexOf('-BEGIN PUBLIC KEY-') < 0 &&
+	    key[i].indexOf('-END RSA PRIVATE KEY-') < 0 &&
+	    key[i].indexOf('-END PUBLIC KEY-') < 0)
+	    out += key [i].trim ();
+	else
+	    founddash++;
+	if (founddash == 2) break;
+    }
+    return out.replace(/=/g, '');
+};
+
+loginbox.prototype.toPEM = function (pkey, ispriv) {
+    if (ispriv)
+	var key = "-----BEGIN RSA PRIVATE KEY-----\n";
+    else
+	var key = "-----BEGIN PUBLIC KEY-----\n";
+    for (var i = 0; i < pkey.length; i += 64) {
+	key += pkey.substr (i, 64)  + "\n";
+    }
+    if (ispriv)
+	key += "-----END RSA PRIVATE KEY-----\n";
+    else
+	key += "-----END PUBLIC KEY-----\n";
+    return key;
+};
+
 
 // credential storage utilities
 
@@ -333,92 +493,7 @@ loginbox.prototype.removeItem = function (key) {
     localStorage.removeItem (key);
 };
 
-// lower lvel crypto drivers
 
-loginbox.prototype.genKeyPair = async function (webcrypto) {
-    var key = {};
-    if (webcrypto) {
-	var use = ["sign", "verify"];
-	var pk = await this.subtle.generateKey (this.alg, true, use);
-	key.keypair = pk;	
-	// decode private key
-	pkArray = await this.subtle.exportKey("pkcs8", pk.privateKey);
-	pkb64 = btoa (ab2str(pkArray));
-	key.privkey = pkb64;
-	key.webCrypto = true;
-    } else {
-	var rsa = new RSAKey ();
-	rsa.generate (1024, "10001");
-	key.privkey = this.fromPEM (rsa.privatePEM ());
-	key.webCrypto = false;	
-    }
-    return key;
-};
-
-loginbox.prototype.signURL = async function (url, key, from) {
-    var sig;
-    var hash = this.alg.hash.classicname;
-    if (key.webCrypto) {
-	if (! key.keypair) {
-	    var privkeydata = str2ab(atob(key.privkey));
-	    key.keypair = { privateKey: await this.subtle.importKey("pkcs8", privkeydata, this.alg, true, ["sign"]) };
-	} else {
-	    // decode public key		
-	    var pkArray = await this.subtle.exportKey("spki", key.keypair.publicKey);
-	    var pkb64 =  btoa (ab2str(pkArray));
-	    key.pubkey = pkb64;
-	}
-    } else {
-	var rsa = new RSAKey ();
-	rsa.readPrivateKeyFromPEMString (this.toPEM (key.privkey), true);
-	key.pubkey = this.fromPEM (rsa.publicPEM ());
-    }
-    url += '&pubkey='+ encodeURIComponent (key.pubkey);
-    url += '&curtime='+ new Date ().getTime ()/1000;
-    url += '&hash='+ hash;
-    if (key.webCrypto) {
-	sig = await this.subtle.sign(this.alg, key.keypair.privateKey, textToArrayBuffer(from+url));
-	sig = btoa (ab2str(sig));
-    } else {
-	sig = hex2b64 (rsa.signString(from+url, hash));
-    }
-    url += '&signature=' + encodeURIComponent (sig);
-    return url;
-};
-
-loginbox.prototype.fromPEM = function (pkey) {
-    var key = pkey.split ("\n");
-    var out = '';
-    var founddash = 0;
-    
-    for (var i = 0; i < key.length; i++) {
-	if (key[i].trim().length > 0 &&
-	    key[i].indexOf('-BEGIN RSA PRIVATE KEY-') < 0 &&
-	    key[i].indexOf('-BEGIN PUBLIC KEY-') < 0 &&
-	    key[i].indexOf('-END RSA PRIVATE KEY-') < 0 &&
-	    key[i].indexOf('-END PUBLIC KEY-') < 0)
-	    out += key [i].trim ();
-	else
-	    founddash++;
-	if (founddash == 2) break;
-    }
-    return out.replace(/=/g, '');
-};
-
-loginbox.prototype.toPEM = function (pkey, ispriv) {
-    if (ispriv)
-	var key = "-----BEGIN RSA PRIVATE KEY-----\n";
-    else
-	var key = "-----BEGIN PUBLIC KEY-----\n";
-    for (var i = 0; i < pkey.length; i += 64) {
-	key += pkey.substr (i, 64)  + "\n";
-    }
-    if (ispriv)
-	key += "-----END RSA PRIVATE KEY-----\n";
-    else
-	key += "-----END PUBLIC KEY-----\n";
-    return key;
-};
 
 // ==end HOBA==
 

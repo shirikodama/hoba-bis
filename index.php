@@ -16,21 +16,9 @@ require_once ("config.php");
 require_once ("common/php/utils.php");
 require_once ("common/php/dochead.php");
 $jsl = new jsloader (NULL);
-$jsl->addJs ("var baseurl = '$baseurl';");
 $jsl->addFile ("css/style.css");
 $jsl->load ();
 ?>
-<script type=text/javascript>
-
-var st = {site: true};
-
-phzicons = stdSprite ('phzicons');
-phzicons.setBaseURL (baseurl);
-
-onloader (function () {
-});
-
-</script>
 <div style="width:800px; margin-left: 200px; margin-top: 60px; padding-bottom: 50px; padding-left: 20px;padding-right: 10px; width: 900px; background:white; border:2px solid gray;" class="newA">
      <h1>Password Reuse Sucks. HOBA is here to help</h1>
      <figure>

@@ -96,6 +96,7 @@ onloader (function () {
 <li>Most of the action wrt HOBA in the code is happening in hoba/js/loginbox.js for signing, the main hoba module is hoba/hobacmn.php which is used by login.php for verifying and enrolling new keys and join.php for signing up. The HOBA specific parts of loginbox.js are what would need to be integrated with your own login UI. The HOBA specific parts of login.php and join.php would need to be integrated with your user database and authentication backend</li>
 <li>In this example email provides an out of band mechanism for the server to send an OTP to prove ownership of the account. SMS and other mechanisms can also be employed</li>
 <li>Like most things, most of this is UI. Don't let that deter you. I've tried to point out the juicy bits to show what is actually new and different in the code.</li>
+<li>This version of the demo has two different ways to prove freshess: a time+replay cache approach, and a nonce based approach patterened after RFC 7616. It's an open question of which is better, as always. I really don't have a dog in that fight, so you can choose.</li>
 <li>If you complain that the backend is written in PHP, you will be obligated to write it in your own favorite language</li>
 <li>If you can lift the Hoba you can win valuable prizes</li>
 </ul>
@@ -103,17 +104,20 @@ onloader (function () {
 <p>
 <h4>TODO</h4>
 <ul>
-   <li>It's an open question whether time based freshness is ok. The flows can always be rewritten to use a nonce-based challenge for replays; I should probably implement both to weigh the pros and cons</li>
-   <li>This code doesn't support email verification for join, but it would work the same as password based enroll</li>
-   <li>I make an effort at dealing with edge cases, but this is a prototype so it's likely that I've missed some</li>
-   <li>There is currently no way to delete a user. Stale credentials just get rejected for no such user when logging in</li>
-   <li>The credentials between classic rsa stuff and webCrypto don't interoperate for some reason. Since this is just a demo, it's nbd</li>
-   <li>The credentials are stored in localStorage. It's ongoing concern about whether that's ok or not. However  physical access to a device is highly problematic, so the main consideration is public devices</li>
-   <li>It might be worth showing the credential store being protected by a local password which never is transmitted. Or not. Security is hard and subtle</li>
-<li></li>
-                                                                                                                                                                                                                                                                                                         </ul>    
-</p>
+    <li>This code doesn't support email verification for join, but it would work the same as password based enroll</li>
+    <li>I make an effort at dealing with edge cases, but this is a prototype so it's likely that I've missed some</li>
+    <li>There is currently no way to delete a user. Stale credentials just get rejected for no such user when logging in</li>
+    <li>The credentials between classic rsa stuff and webCrypto don't interoperate for some reason. Since this is just a demo, it's nbd</li>
+    <li>The credentials are stored in localStorage. It's ongoing concern about whether that's ok or not. However unsecured physical access to any device is highly problematic, so the main consideration is public/shared devices</li>
+</ul>
 
+</p>
+<p>
+    <h4>Contact and Feedback</h4>
+    <ul>
+	<li>To comment publicly, use my blog post <a href="https://rip-van-webble.blogspot.com/2020/05/hoba-revisted-with-webcrypto.html" target=_blank>here</a></li>
+	<li>To send me email: <a href="mailto:mike@mtcc.com">mike@mtcc.com</a></li>	
+    </ul>
 <div id="mainpage"></div>
 <div id="maincontainer"></div>
 <div id="loginpanecontainer"></div>
