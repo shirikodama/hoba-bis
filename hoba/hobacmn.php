@@ -53,6 +53,13 @@ function hobaChecks ($opts, $from) {
     $pos = strpos ($body, "&signature=");
     if ($pos === false) 
         sendResp (SIGERROR, "signature not found", NULL);
+    if (! isset ($opts ['pubkey'])) {
+        sendResp (SIGERROR, "bad login auth method", NULL);
+    }
+    $pkeyid = openssl_get_publickey(toPEM ($opts ['pubkey']));
+    if (! $pkeyid) {
+        sendResp (SIGERROR, "bad pubkey format", NULL);
+    }    
     $body = substr ($body, 0, $pos);
     if (isset ($opts['digest'])) {
 	$swdb->purgeUserNonce (time ());
@@ -73,24 +80,17 @@ function hobaChecks ($opts, $from) {
 	$nonce = $swdb->deleteUserNonce ($opts['uname'], $opts['snonce']);
     } else {
 	$body = 'POST:' . $from . ':' . $body;
+	// check for freshness
+	if ($opts ['curtime'] > time ()+SIGTMO) {
+            sendResp (SIGERROR, "time too far in the future", NULL);
+	}
+	if ($opts ['curtime'] < time ()-SIGTMO) {
+            sendResp (SIGERROR, "stale signature", NULL);
+	}
+	if ($swdb->fetchUserPubkeyReplayCache ($opts ['signature'])) {
+            sendResp (SIGERROR, "replay detected", NULL);
+	}
     }	
-    if (! isset ($opts ['pubkey'])) {
-        sendResp (SIGERROR, "bad login auth method", NULL);
-    }
-    $pkeyid = openssl_get_publickey(toPEM ($opts ['pubkey']));
-    if (! $pkeyid) {
-        sendResp (SIGERROR, "bad pubkey format", NULL);
-    }
-    // check for freshness
-    if ($opts ['curtime'] > time ()+SIGTMO) {
-        sendResp (SIGERROR, "time too far in the future", NULL);
-    }
-    if ($opts ['curtime'] < time ()-SIGTMO) {
-        sendResp (SIGERROR, "stale signature", NULL);
-    }
-    if ($swdb->fetchUserPubkeyReplayCache ($opts ['signature'])) {
-        sendResp (SIGERROR, "replay detected", NULL);
-    }
     if (! openssl_verify ($body, base64_decode ($opts ['signature']), $pkeyid, $hash)) {
         sendResp (SIGERROR, "bad signature", NULL);
     }

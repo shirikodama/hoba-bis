@@ -36,7 +36,7 @@ if (($swdb = new dbif ()) == NULL) {
 }
 
 if (($u = $swdb->fetchUser ($opts ['uname'])) == NULL) {
-    if (! $opts ['gennonce'])
+    if (! @$opts ['gennonce'])
 	sendResp (NOUSER, "No such user", NULL);
 }
 

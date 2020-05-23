@@ -176,6 +176,20 @@ loginbox.prototype.pubkeyLoginForm = function () {
     this.sendPubkeyLogin (uname, OTP);
 };
 
+loginbox.prototype.getPass = async function (encrypt, msg) {
+    if (msg)
+	msg = '<span class="newX">'+msg+'</span><br><br>';
+    else
+	msg = '';
+    if (encrypt)
+	msg += "Password to Encrypt Key [blank means none]";
+    else
+	msg += "Password to Decrypt Key";
+    var ans = await phzPrompt (msg, encrypt ? "Lock Key" : "Unlock Key", "password", { ok:'Done', cancel:'Cancel'});
+    return ans.value;
+};
+
+
 // ==begin HOBA==
 
 
@@ -223,7 +237,9 @@ loginbox.prototype.sendPubkeyLogin = async function (uname, OTP) {
     if (OTP) {
 	key = await this.genKeyPair (true);
     } else {
-	key = this.getCredential (uname);
+	key = await this.getCredential (uname, false);
+	if (key == -1)
+	    return;
 	if (! key) {
 	    key = await this.genKeyPair (true);
 	}
@@ -232,10 +248,11 @@ loginbox.prototype.sendPubkeyLogin = async function (uname, OTP) {
     var post = sprintf ("uname=%s",encodeURIComponent (uname));
     if (OTP) {
 	post += '&OTP='+encodeURIComponent (OTP);
+	var pwd = await this.getPass (true);    
     }
     post = await this.signURL (post, key, 'login');
     url = this.baseurl + url;
-    fetchServer ("POST", url, function (r, params, sts) {
+    fetchServer ("POST", url, async function (r, params, sts) {
 	if (r.resp >= 300) {	    
 	    if (r.resp == state.UNENROLLED) {
 		state.removeCredential (uname);	
@@ -250,16 +267,17 @@ loginbox.prototype.sendPubkeyLogin = async function (uname, OTP) {
 		phzAlert ("Can't login: "+r.comment);
 	    return;
 	}
-	if (OTP) {
-	    state.storeKeys (uname, key);
-	}	    
 	state.setItem (state.appname+"-curuser", uname);
 	if (state.onLoggedIn)
 	    state.onLoggedIn (false, uname);	
 	state.pane.display (0);
 	if (OTP) {
-	    top.location.href = top.location.pathname;
-	}
+	    await state.storeKeys (uname, key, pwd);
+	    // XXX: this is a hack because await doesn't work across page unloads
+	    setTimeout (async function () {
+		top.location.href = top.location.pathname;
+	    }, 500);
+	}	    
     }, null, post);
 };
 
@@ -281,7 +299,7 @@ loginbox.prototype.sendPubkeyJoin = async function (uname, email, webcrypto) {
 	}, null, post);
 	return;
     }    
-    var key = this.getCredential (uname);
+    var key = await this.getCredential (uname, false);
     if (! key)
 	var key = await this.genKeyPair (webcrypto);
     var url = 'join.php';
@@ -291,12 +309,13 @@ loginbox.prototype.sendPubkeyJoin = async function (uname, email, webcrypto) {
     phzDialog.close ();    
     post = await this.signURL (post, key, 'join');
     url = this.baseurl + url;
-    fetchServer ("POST", url, function (r, params, sts) {
+    var pwd = await this.getPass (true);
+    fetchServer ("POST", url, async function (r, params, sts) {
 	if (r.resp >= 300) {
 	    phzAlert ("Can't join: "+r.comment);
 	    return;
 	}
-	state.storeKeys (uname, key);
+	await state.storeKeys (uname, key, pwd);
 	if (state.onLoggedIn)
 	    state.onLoggedIn (true, uname);
 	state.pane.display (0);
@@ -425,40 +444,141 @@ loginbox.prototype.toPEM = function (pkey, ispriv) {
     return key;
 };
 
+/*
+ *  Wrap the given key
+ */
+
+loginbox.prototype.wrapKey = async function (key, pwd) {
+    var rv = {};
+    // import the password
+    const enc = new TextEncoder();
+    var pwKey = await window.crypto.subtle.importKey(
+	"raw",
+	enc.encode(pwd),
+	{name: "PBKDF2"},
+	false,
+	["deriveBits", "deriveKey"]
+    );
+    var salt = window.crypto.getRandomValues(new Uint8Array(16));
+    var iv = window.crypto.getRandomValues(new Uint8Array(12));    
+    var wrappingKey = await window.crypto.subtle.deriveKey({ "name": "PBKDF2", salt: salt, "iterations": 100000, "hash": "SHA-256" },
+							   pwKey, { name: "AES-GCM", length:256}, true, [ "wrapKey", "unwrapKey" ]);
+    var wrappedkey = await window.crypto.subtle.wrapKey("pkcs8", key.keypair.privateKey, wrappingKey, { name: "AES-GCM", iv: iv });
+    rv.wrappedkey = btoa (ab2str(wrappedkey));
+    rv.salt = btoa (ab2str(salt));
+    rv.iv = btoa (ab2str(iv));
+    return rv;
+};
+
+/*
+ *  Unwrap the key
+ */
+
+loginbox.prototype.unwrapKey = async function (key, pwd) {
+    var salt = str2ab (atob (key.salt));
+    var iv = str2ab (atob (key.iv));
+    var wrappedkey = str2ab (atob (key.wrappedkey));
+    var rv = {};
+    // import the password
+    const enc = new TextEncoder();
+    var pwKey = await window.crypto.subtle.importKey(
+	"raw",
+	enc.encode(pwd),
+	{name: "PBKDF2"},
+	false,
+	["deriveBits", "deriveKey"]
+    );
+    var unwrappingkey = await window.crypto.subtle.deriveKey({ "name": "PBKDF2", salt: salt, "iterations": 100000,"hash": "SHA-256" },
+							     pwKey, { "name": "AES-GCM", "length": 256}, true, [ "wrapKey", "unwrapKey" ]);
+    try {
+	var pkey = await window.crypto.subtle.unwrapKey(
+	    "pkcs8",               // import format
+	    wrappedkey,            // ArrayBuffer representing key to unwrap
+	    unwrappingkey,         // CryptoKey representing key encryption key
+	    { name: "AES-GCM", iv: iv },
+	    { name: "RSA-PSS", hash: "SHA-256" },
+	    true,                  // extractability of key to unwrap
+	    ["sign"]               // key usages for key to unwrap
+	);
+    } catch (e) {
+	console.log ("err1", e);
+	return null;
+    }
+    try {
+	var pkArray = await this.subtle.exportKey("pkcs8", pkey);
+	var pkb64 = btoa (ab2str(pkArray));
+	return pkb64;
+    } catch (e) {
+	console.log ("err2", e);
+	return null;
+    }
+};
+
+
+
 
 // credential storage utilities
 
-loginbox.prototype.storeKeys = function (uname, key) {    
+loginbox.prototype.storeKeys = async function (uname, key, pwd) {    
     this.setItem (this.appname+"-curuser", uname);
-    this.setCredential (uname, key);
+    this.setCredential (uname, key, pwd);
 };
 
-loginbox.prototype.setCredential = function (uname, key) {
-    var credential = sprintf ('{"uname":"%s", "privkey":"%s", "pubkey":"%s", "credate":%d, "webCrypto":%s}',
-			      json_slashify (uname), 
-			      json_slashify (key.privkey),
-			      json_slashify (key.pubkey), 
-			      new Date ().getTime ()/1000,
-			      key.webCrypto ? "true" : "false",
-			     );
+loginbox.prototype.setCredential = async function (uname, key, pwd) {
+    if (pwd) {	
+	var wrappedkey = await this.wrapKey (key, pwd);
+	var credential = sprintf ('{"uname":"%s", "wrappedkey":"%s", "pubkey":"%s", "credate":%d, "webCrypto":%s, "salt":"%s", "iv":"%s"}',
+				  json_slashify (uname), 
+				  json_slashify (wrappedkey.wrappedkey),
+				  json_slashify (key.pubkey), 
+				  new Date ().getTime ()/1000,
+				  key.webCrypto ? "true" : "false",
+				  json_slashify (wrappedkey.salt),
+				  json_slashify (wrappedkey.iv));
+    } else {
+	var credential = sprintf ('{"uname":"%s", "privkey":"%s", "pubkey":"%s", "credate":%d, "webCrypto":%s}',
+				  json_slashify (uname), 
+				  json_slashify (key.privkey),
+				  json_slashify (key.pubkey), 
+				  new Date ().getTime ()/1000,
+				  key.webCrypto ? "true" : "false",
+				 );
+    }
     this.setItem (this.credprefix+'-'+uname, credential);
 };
 
-loginbox.prototype.getCredential = function (uname, noprefix) {
+loginbox.prototype.getCredential = async function (uname, noprefix) {
     var keyent = this.getItem (noprefix ? uname : this.credprefix+'-'+uname);
+    var key = null;
+
     if (! keyent)
 	return null;
-    var key;
     try {
 	key = JSON.parse (keyent);
     } catch (e) {
+	// error handled below...
     }
-    if (! key) {
-	this.removeItem (keyent);	
-	return null;
+    if (! noprefix)  {
+	if (! key) {
+	    this.removeItem (keyent);	
+	    return null;
+	}
+	if (key.wrappedkey) {
+	    var pwd, msg = null, privkey = null;
+	    do {
+		// XXX layer violation
+		pwd = await this.getPass (false, msg);
+		if (! pwd)
+		    return -1;
+		privkey = await this.unwrapKey (key, pwd);
+		if (! privkey)
+		    msg = "Password Incorrect";
+	    } while (privkey == null);
+	    key.privkey = privkey;
+	}
+	key.privkey = key.privkey.replace(/=/g, '');    
+	key.pubkey = key.pubkey.replace(/=/g, '');
     }
-    key.privkey = key.privkey.replace(/=/g, '');
-    key.privpub = key.pubkey.replace(/=/g, '');
     return key;
 };
 
@@ -467,13 +587,13 @@ loginbox.prototype.removeCredential = function (uname) {
     this.removeItem (this.credprefix+'-'+uname);
 };
 
-loginbox.prototype.getCredentials = function () {
+loginbox.prototype.getCredentials = async function () {
     var rv = [];
     var keys = Object.keys (localStorage);
     var n = 0;
     for (var i in keys) {
 	if (! keys [i]) continue;
-	var cred = this.getCredential (keys[i], true);
+	var cred = await this.getCredential (keys[i], true);
 	if (! cred) continue;
 	rv [n++] = cred;
     }

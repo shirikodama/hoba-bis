@@ -59,24 +59,26 @@ mainPage.prototype.display = function () {
     reliableNewc (el, newc);
 };
 
-mainPage.prototype.settings = function () {
+mainPage.prototype.settings = async function () {
     var html = '';
     html += this.settingpane.title ("Profile", this.prefix+".settingpane.display(0);");
-    var cred = this.lb.getCredential (this.opts.user);    
+    var cred = await this.lb.getCredential ('hoba-'+this.opts.user, true);
     var credtype = cred.webCrypto ? "webCrypto" : "classic js rsa";
     html += '<div style="padding:5px">';
     html += '<h4>User '+this.opts.user+' using '+credtype+' keys</h4>';
     html += '<h4>All Credentials</h4>';
-    var creds = this.lb.getCredentials ();    
-    var ncreds = 0;
+    var creds = await this.lb.getCredentials ();    
     var credstr = '';
     var prefix = this.lb.credprefix;
+    html += '<table>';
+    html += '<tr><th>User</th><th>Method</th><th>Encrypted</th>';
     for (var i in creds) {
 	var cred = creds[i];
-	credstr += cred.uname+' '+(cred.webCrypto ? 'webCrypto' : 'js RSA')+'<br>';
-	ncreds++;
+	html += '<tr>';
+	html += '<td>'+cred.uname+'</td><td>'+(cred.webCrypto ? 'webCrypto' : 'js RSA')+'</td><td>'+(cred.salt ? 'Yes': 'No')+'</td>';
+	html += '</tr>';
     }
-    if (ncreds)	html += credstr.substr (0, credstr.length-4);
+    html += '</table>';
     html += '</div>';
     this.settingpane.reliableNewc (html);
     var cw = f_clientWidth ()/2-this.paneWidth/2;
